@@ -314,16 +314,27 @@ def transcribe(vocals: Path, report: Report) -> list[dict]:
     report("transcribe", None)
     if _whisper is None:
         _whisper = WhisperModel("small", device="cpu", compute_type="int8")
-    segments, info = _whisper.transcribe(str(vocals), word_timestamps=True,
-                                      vad_filter=True, condition_on_previous_text=False)
-    lines = []
-    for seg in segments:
-        report("transcribe", min(0.99, seg.end / max(info.duration, 1)))
-        words = [{"t": w.start, "end": w.end, "w": w.word.strip()} for w in (seg.words or [])]
-        if words:
-            lines.append({"t": words[0]["t"], "end": words[-1]["end"],
-                          "text": " ".join(w["w"] for w in words), "words": words})
-    return lines
+    # Decode ourselves (16 kHz mono float) instead of handing Whisper a path: its own decoder goes
+    # through PyAV, whose API changed under it (PyAV 19 dropped an argument faster-whisper passes).
+    pcm = subprocess.run([FFMPEG, "-loglevel", "error", "-i", str(vocals), "-ac", "1", "-ar", "16000",
+                          "-f", "f32le", "pipe:1"], check=True, capture_output=True).stdout
+    audio = np.frombuffer(pcm, dtype="<f4").copy()
+
+    def run(vad: bool) -> list[dict]:
+        segments, info = _whisper.transcribe(audio, word_timestamps=True,
+                                             vad_filter=vad, condition_on_previous_text=False)
+        lines = []
+        for seg in segments:
+            report("transcribe", min(0.99, seg.end / max(info.duration, 1)))
+            words = [{"t": w.start, "end": w.end, "w": w.word.strip()} for w in (seg.words or [])]
+            if words:
+                lines.append({"t": words[0]["t"], "end": words[-1]["end"],
+                              "text": " ".join(w["w"] for w in words), "words": words})
+        return lines
+
+    # The voice-activity filter is tuned for speech and can discard sung (or synthesized) vocals
+    # entirely; if it leaves nothing, listen to the whole stem.
+    return run(vad=True) or run(vad=False)
 
 
 # ---------------------------------------------------------------- alignment
