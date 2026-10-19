@@ -1,0 +1,13 @@
+# Your songs: downloaded audio, separated stems and fetched lyrics. Never commit these.
+data/
+# Separation models (downloaded on first use, 60 MB to 2 GB each)
+models/
+# ffmpeg copied from imageio-ffmpeg at startup
+bin/
+
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

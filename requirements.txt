@@ -1,0 +1,18 @@
+# Python 3.10–3.12. On Windows/Linux without an NVIDIA GPU, install the CPU build of torch:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+# With an NVIDIA GPU, swap audio-separator[cpu] for audio-separator[gpu] and use the CUDA torch build.
+torch==2.5.1
+torchaudio==2.5.1
+audio-separator[cpu]==0.47.1
+audioread==3.1.0
+onnxruntime==1.31.0
+faster-whisper==1.2.1
+fastapi==0.149.0
+starlette==1.9.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.1
+yt-dlp>=2026.8.19
+imageio-ffmpeg==0.6.0
+httpx==0.28.1
+soundfile==0.14.0
+numpy==2.5.4

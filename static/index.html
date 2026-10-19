@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stagelight Karaoke</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Baloo+2:wght@700;800&family=Bebas+Neue&family=Playfair+Display:ital,wght@0,800;1,800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="ambient"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.4A7.5 7.5 0 0 0 7 6.4l-2.4-.9-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-.9a7.5 7.5 0 0 0 2.6 1.5l.4 2.4h4l.4-2.4a7.5 7.5 0 0 0 2.6-1.5l2.4.9 2-3.4-2-1.6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- ============================================================ home -->
+<section id="home" class="view">
+  <header class="brand"><span class="logo"></span>Stagelight</header>
+  <div class="hero">
+    <h1>Sing <em>anything.</em></h1>
+    <p>Search for a song or paste a YouTube link. We strip the vocals, find the lyrics and sync them to the music video.</p>
+    <form id="form" class="search">
+      <input id="url" placeholder="Search a song, or paste a YouTube link" autocomplete="off" spellcheck="false" required>
+      <button id="go" class="btn primary">Search</button>
+    </form>
+    <label class="chip" title="How the vocals are removed: change it any time in Settings">
+      Vocal removal: <select id="modelSelect" aria-label="Vocal separation model"></select>
+    </label>
+    <div id="formError" class="error" hidden></div>
+    <p class="demo-hint">No song handy? <a id="demoLink" href="?demo">Try the demo</a>, it plays instantly.</p>
+  </div>
+  <div id="results" hidden>
+    <div class="lib-head">
+      <h2 id="resTitle">Results</h2>
+      <button id="resClear" class="btn ghost small" type="button">Clear</button>
+    </div>
+    <div id="resGrid" class="grid"></div>
+    <p id="resNote" class="lib-empty" hidden></p>
+  </div>
+
+  <div id="library" hidden>
+    <div class="lib-head">
+      <h2>Your library <span id="libCount"></span></h2>
+      <input id="libSearch" type="search" placeholder="Search songs or artists  ( / )" autocomplete="off" aria-label="Search your library">
+    </div>
+    <div id="libGrid" class="grid"></div>
+    <p id="libEmpty" class="lib-empty" hidden>No songs match “<span></span>”.</p>
+  </div>
+</section>
+
+<!-- ============================================================ processing -->
+<section id="processing" class="view" hidden>
+  <div class="proc-card">
+    <img id="procThumb" alt="">
+    <div class="proc-body">
+      <div class="eyebrow">Preparing your track</div>
+      <h2 id="procTitle">Loading…</h2>
+      <ol id="steps" class="steps">
+        <li data-step="download"><i></i><span>Download audio</span><small></small></li>
+        <li data-step="separate"><i></i><span>Remove vocals</span><small></small></li>
+        <li data-step="lyrics"><i></i><span>Find lyrics</span><small></small></li>
+        <li data-step="align"><i></i><span>Sync to video</span><small></small></li>
+      </ol>
+      <div class="bar"><div id="barFill"></div></div>
+      <div class="proc-foot"><span id="procNote"></span><button id="procCancel" class="btn ghost small" title="Processing continues; the song appears in your library when it's ready">Keep going in background</button></div>
+      <div id="procError" class="error" hidden></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ player -->
+<section id="playerView" class="view" hidden>
+  <div class="topbar">
+    <button id="back" class="icon-btn" title="Library"><svg><use href="#i-back"/></svg></button>
+    <div class="now">
+      <div id="nowTitle" class="now-title"></div>
+      <div id="nowSub" class="now-sub"></div>
+    </div>
+  </div>
+
+  <div id="player">
+    <div id="stage">
+      <div id="video"><div id="yt"></div></div>
+      <div id="dim"></div>
+      <div id="lyrics">
+        <div class="line prev" id="lPrev"></div>
+        <div class="line cur" id="lCur"></div>
+        <div class="line next" id="lNext"></div>
+      </div>
+      <div id="countdown"></div>
+      <div id="bigPlay"><svg><use href="#i-play"/></svg></div>
+    </div>
+
+    <div id="controls">
+      <button id="play" class="icon-btn play" title="Play (Space)"><svg><use href="#i-play"/></svg></button>
+      <span id="time" class="time">0:00</span>
+      <input id="seek" class="range seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+      <span id="dur" class="time">0:00</span>
+      <div class="ctl-group" title="Mix the original vocal back in: 0% is pure karaoke">
+        <svg class="ctl-ico"><use href="#i-mic"/></svg>
+        <input id="vocVol" class="range small" type="range" min="0" max="1" step="0.01" value="0" aria-label="Vocal level">
+        <b id="vocVal" class="ctl-val">0%</b>
+      </div>
+      <div class="ctl-group" title="Lyrics early or late? Nudge them ( [ and ] )">
+        <span class="ctl-label">Sync</span>
+        <button id="offMinus" class="mini" aria-label="Show lyrics earlier">−</button><b id="offVal" class="ctl-val" aria-live="polite">0.0s</b><button id="offPlus" class="mini" aria-label="Show lyrics later">+</button>
+      </div>
+      <button id="openSettings" class="icon-btn" title="Settings (S)"><svg><use href="#i-gear"/></svg></button>
+      <button id="fs" class="icon-btn" title="Fullscreen (F)"><svg><use href="#i-expand"/></svg></button>
+    </div>
+
+    <!-- ============================================================ settings -->
+    <aside id="settings" aria-label="Settings">
+      <div class="set-head">
+        <h3>Settings</h3>
+        <button id="closeSettings" class="icon-btn" title="Close (Esc)"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="set-body">
+        <section>
+          <h4>Lyrics</h4>
+          <label class="row">Text size <output id="sizeVal">100%</output></label>
+          <input id="setSize" class="range" type="range" min="60" max="170" step="5" value="100">
+
+          <div class="row">Font</div>
+          <div class="seg fonts" data-setting="font">
+            <button data-value="modern" style="font-family:Outfit">Modern</button>
+            <button data-value="rounded" style="font-family:'Baloo 2'">Rounded</button>
+            <button data-value="poster" style="font-family:'Bebas Neue';letter-spacing:.04em">Poster</button>
+            <button data-value="classic" style="font-family:'Playfair Display'">Classic</button>
+          </div>
+
+          <div class="row">Highlight style</div>
+          <div class="seg" data-setting="anim">
+            <button data-value="wipe" title="Colour sweeps through each word">Wipe</button>
+            <button data-value="pop" title="Each word jumps as it is sung">Pop</button>
+            <button data-value="glow" title="Wipe with a neon glow">Glow</button>
+            <button data-value="line" title="Whole line lights up at once">Line</button>
+          </div>
+
+          <div class="row">Highlight colour</div>
+          <div class="swatches" data-setting="color">
+            <button data-value="#ffd447" style="--c:#ffd447" title="Gold"></button>
+            <button data-value="#ff4fa3" style="--c:#ff4fa3" title="Pink"></button>
+            <button data-value="#38e1ff" style="--c:#38e1ff" title="Cyan"></button>
+            <button data-value="#8dff6a" style="--c:#8dff6a" title="Lime"></button>
+            <button data-value="#b38bff" style="--c:#b38bff" title="Violet"></button>
+            <button data-value="#ff8a3d" style="--c:#ff8a3d" title="Orange"></button>
+          </div>
+
+          <div class="row">Lines on screen</div>
+          <div class="seg" data-setting="lines">
+            <button data-value="1">Current</button>
+            <button data-value="2">+ Next</button>
+            <button data-value="3">All three</button>
+          </div>
+
+          <div class="row">Position</div>
+          <div class="seg" data-setting="position">
+            <button data-value="bottom">Bottom</button>
+            <button data-value="center">Center</button>
+          </div>
+
+          <label class="toggle"><span>Bouncing ball</span><input type="checkbox" data-setting="ball"><i></i></label>
+          <label class="toggle"><span>Countdown before verses</span><input type="checkbox" data-setting="countdown"><i></i></label>
+        </section>
+
+        <section>
+          <h4>Video</h4>
+          <label class="row">Dim video <output id="dimVal">0%</output></label>
+          <input id="setDim" class="range" type="range" min="0" max="85" step="5" value="15">
+          <label class="toggle"><span>Blur video</span><input type="checkbox" data-setting="blur"><i></i></label>
+        </section>
+
+        <section>
+          <h4>Audio</h4>
+          <label class="row">Music volume <output id="musicVal">100%</output></label>
+          <input id="setMusic" class="range" type="range" min="0" max="100" step="1" value="100">
+        </section>
+
+        <section>
+          <h4>Vocal separation</h4>
+          <p class="hint">Used for new songs. On this song you can switch to a model that's already processed, or process it again with another one.</p>
+          <div id="modelList" class="models"></div>
+        </section>
+
+        <section>
+          <h4>Shortcuts</h4>
+          <dl class="keys">
+            <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
+            <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Back / forward 5 s</dd>
+            <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Lyrics earlier / later</dd>
+            <dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
+            <dt><kbd>S</kbd></dt><dd>Settings</dd>
+          </dl>
+          <button id="resetSettings" class="btn ghost small">Reset to defaults</button>
+        </section>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================================================ queue -->
+<aside id="queue" hidden aria-label="Processing queue">
+  <button id="queueHead" class="queue-head" type="button" aria-expanded="true">
+    <span class="queue-dot"></span><span id="queueLabel">Queue</span><svg class="chev"><use href="#i-back"/></svg>
+  </button>
+  <ol id="queueList"></ol>
+</aside>
+
+<audio id="audio" preload="auto"></audio>
+<audio id="vocals" preload="auto"></audio>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="app.js"></script>
+</body>
+</html>

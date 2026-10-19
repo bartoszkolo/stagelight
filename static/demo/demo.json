@@ -1,0 +1,20 @@
+{
+  "id": "demo",
+  "artist": "Stagelight",
+  "title": "The Demo Song",
+  "videoTitle": "Stagelight demo",
+  "source": "demo",
+  "offset": 0,
+  "stems": ["karaoke"],
+  "media": "/demo",
+  "lines": [
+    { "t": 3.6, "end": 6.8, "text": "Paste a link and press the button" },
+    { "t": 7.2, "end": 10.4, "text": "the singer slips out of the room" },
+    { "t": 10.8, "end": 14.0, "text": "the lights come up, the words are glowing" },
+    { "t": 14.4, "end": 17.6, "text": "and now the stage belongs to you" },
+    { "t": 18.0, "end": 21.2, "text": "Sing it loud or sing it wrong" },
+    { "t": 21.6, "end": 24.8, "text": "every word lights up along" },
+    { "t": 25.2, "end": 28.4, "text": "follow the ball, it keeps the time" },
+    { "t": 28.8, "end": 32.4, "text": "one more chorus, one more line" }
+  ]
+}
