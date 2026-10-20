@@ -124,6 +124,7 @@ code { font: 14px ui-monospace, Consolas, monospace; background: var(--surface-2
 .platform.mine { border-color: rgba(255, 79, 163, .6); box-shadow: 0 0 0 4px rgba(255, 79, 163, .1); }
 .platform.mine h3::after { content: "Your system"; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-left: 10px; padding: 3px 9px; border-radius: 999px; background: var(--grad); vertical-align: middle; }
 .platform .btn { width: 100%; }
+.platform .fine-print { font-size: 13px; color: #6f698d; margin: 4px 0 0; }
 .first-launch { margin-top: 28px; padding: 18px 22px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 15px; }
 .first-launch summary { cursor: pointer; color: var(--text); font-weight: 600; }
 .first-launch ul { padding-left: 20px; }

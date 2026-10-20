@@ -10,15 +10,24 @@ if [[ "$(uname)" == "Linux" ]] && ! command -v nvidia-smi >/dev/null; then
   EXTRA=(--extra-index-url https://download.pytorch.org/whl/cpu)
 fi
 
+if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "x86_64" ]]; then
+  echo "Sorry: Stagelight needs a Mac with Apple Silicon (M1 or newer)."
+  echo "PyTorch, which the vocal separation needs, no longer has builds for Intel Macs."
+  exit 1
+fi
+
 if [[ ! -x "$PY" ]]; then
   echo "First run: setting up Python environment..."
+  # Two steps: audio-separator goes in without its dependency list (see requirements.txt).
   if command -v uv >/dev/null; then
     uv venv --python 3.12 .venv
     uv pip install --python "$PY" -r requirements.txt "${EXTRA[@]}" --index-strategy unsafe-best-match
+    uv pip install --python "$PY" --no-deps -r requirements-nodeps.txt
   else
     python3.12 -m venv .venv || python3 -m venv .venv
     "$PY" -m pip install --upgrade pip
     "$PY" -m pip install -r requirements.txt "${EXTRA[@]}"
+    "$PY" -m pip install --no-deps -r requirements-nodeps.txt
   fi
 fi
 

@@ -25,14 +25,11 @@ jobs:
             os: windows-latest
             uv: uv-x86_64-pc-windows-msvc.zip
             args: --win --x64
+          # No Intel Mac build: PyTorch stopped shipping x86_64 macOS wheels, so the engine can't install there.
           - name: macOS Apple Silicon
             os: macos-14
             uv: uv-aarch64-apple-darwin.tar.gz
             args: --mac --arm64
-          - name: macOS Intel
-            os: macos-14
-            uv: uv-x86_64-apple-darwin.tar.gz
-            args: --mac --x64
           - name: Linux x64
             os: ubuntu-latest
             uv: uv-x86_64-unknown-linux-gnu.tar.gz

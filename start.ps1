@@ -7,13 +7,16 @@ $cpuTorch = "https://download.pytorch.org/whl/cpu"
 
 if (-not (Test-Path $py)) {
     Write-Host "First run: setting up Python environment..." -ForegroundColor Magenta
+    # Two steps: audio-separator goes in without its dependency list (see requirements.txt).
     if (Get-Command uv -ErrorAction SilentlyContinue) {
         uv venv --python 3.12 .venv
         uv pip install --python $py -r requirements.txt --extra-index-url $cpuTorch --index-strategy unsafe-best-match
+        uv pip install --python $py --no-deps -r requirements-nodeps.txt
     } else {
         py -3.12 -m venv .venv
         & $py -m pip install --upgrade pip
         & $py -m pip install -r requirements.txt --extra-index-url $cpuTorch
+        & $py -m pip install --no-deps -r requirements-nodeps.txt
     }
 }
 

@@ -1,0 +1,2 @@
+# Installed with --no-deps after requirements.txt (see the note there).
+audio-separator==0.47.1

@@ -42,7 +42,9 @@ const step = (id, state, detail = "") => setupWin?.webContents.send("step", { id
 // ------------------------------------------------------------------ first-run install
 
 function requirementsHash() {
-  return crypto.createHash("sha256").update(fs.readFileSync(path.join(APP_DIR, "requirements.txt"))).digest("hex").slice(0, 16);
+  const h = crypto.createHash("sha256");
+  for (const f of ["requirements.txt", "requirements-nodeps.txt"]) h.update(fs.readFileSync(path.join(APP_DIR, f)));
+  return h.digest("hex").slice(0, 16);
 }
 
 function isInstalled() {
@@ -102,6 +104,9 @@ async function install() {
   const gpu = process.platform !== "darwin" && (await hasNvidia());
   if (process.platform !== "darwin" && !gpu) args.push("--extra-index-url", "https://download.pytorch.org/whl/cpu");
   await run(UV, args, uvEnv);
+  // audio-separator without its own dependency list: it would pull in diffq, which can't be
+  // installed on macOS (see requirements.txt).
+  await run(UV, ["pip", "install", "--python", PY, "--no-deps", "-r", path.join(APP_DIR, "requirements-nodeps.txt")], uvEnv);
   step("packages", "done");
 
   fs.writeFileSync(MARKER, JSON.stringify({ requirements: requirementsHash(), date: new Date().toISOString(), gpu }));
@@ -240,6 +245,11 @@ async function reinstall() {
 async function boot() {
   if (!setupWin) await createSetupWindow();
   try {
+    // PyTorch no longer ships builds for Intel Macs, so the AI engine can't be installed there.
+    if (process.platform === "darwin" && process.arch === "x64" && !app.runningUnderARM64Translation) {
+      throw new Error("Stagelight needs a Mac with Apple Silicon (M1 or newer). Intel Macs aren't supported "
+        + "yet, because the AI library it uses no longer has builds for them.");
+    }
     if (isInstalled()) {
       step("python", "done"); step("packages", "done");
     } else {

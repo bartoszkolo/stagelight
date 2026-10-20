@@ -1,12 +1,38 @@
-# Python 3.10–3.12. On Windows/Linux without an NVIDIA GPU, install the CPU build of torch:
-#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
-# With an NVIDIA GPU, swap audio-separator[cpu] for audio-separator[gpu] and use the CUDA torch build.
+# Python 3.10–3.12. Install in two steps (start.sh / start.ps1 and the desktop app do this):
+#   pip install -r requirements.txt  [--extra-index-url https://download.pytorch.org/whl/cpu on Windows/Linux without an NVIDIA GPU]
+#   pip install --no-deps -r requirements-nodeps.txt
+#
+# audio-separator is installed without its own dependency list (requirements-nodeps.txt) because it
+# pulls in diffq, which has no prebuilt wheels for Python 3.12 on macOS and fails to compile there.
+# diffq (and torchaudio) are only used by Demucs models; Stagelight uses the MDX-Net ones. Its other
+# runtime dependencies are listed here instead.
 torch==2.5.1
-torchaudio==2.5.1
-audio-separator[cpu]==0.47.1
-audioread==3.1.0
 onnxruntime==1.31.0
+onnx-weekly==1.24.0.dev20261019
+onnx2torch-py313==1.6.0
+numpy==2.5.4
+scipy==1.18.1
+librosa==1.0.0
+resampy==0.4.3
+samplerate==0.1.0
+soundfile==0.14.0
+pydub==0.25.1
+julius==0.2.8
+einops==0.8.2
+beartype==0.18.5
+rotary-embedding-torch==0.6.5
+ml-collections==1.1.0
+pyyaml==6.0.3
+requests==2.34.2
+six==1.17.0
+tqdm==4.70.1
+packaging==26.3
+audioread==3.1.0
+
+# lyrics transcription fallback
 faster-whisper==1.2.1
+
+# server and download
 fastapi==0.149.0
 starlette==1.9.0
 uvicorn[standard]==0.54.0
@@ -14,5 +40,3 @@ pydantic==2.14.1
 yt-dlp>=2026.8.19
 imageio-ffmpeg==0.6.0
 httpx==0.28.1
-soundfile==0.14.0
-numpy==2.5.4

@@ -39,9 +39,11 @@ with the music video in the background. **No account, no upload, no subscription
 
 ## Download
 
-| Windows | macOS | Linux |
+| Windows | macOS (Apple Silicon) | Linux |
 |---|---|---|
-| [**Stagelight-win-x64.exe**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-win-x64.exe) | [**Apple Silicon**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-mac-arm64.dmg) · [Intel](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-mac-x64.dmg) | [**AppImage**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-linux-x86_64.AppImage) · [.deb](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-linux-amd64.deb) |
+| [**Stagelight-win-x64.exe**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-win-x64.exe) | [**Stagelight-mac-arm64.dmg**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-mac-arm64.dmg) | [**AppImage**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-linux-x86_64.AppImage) · [.deb](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-linux-amd64.deb) |
+
+Intel Macs aren't supported: PyTorch, which the vocal separation runs on, no longer ships builds for them.
 
 The installer is about 150 MB. On first launch Stagelight downloads its AI engine (about 700 MB,
 once) into your user folder, which takes a few minutes. Then it opens with a built-in song you can

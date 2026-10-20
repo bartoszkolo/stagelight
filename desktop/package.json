@@ -22,7 +22,7 @@
     "directories": { "output": "dist", "buildResources": "build" },
     "files": ["main.js", "preload.js", "setup.html", "package.json", "build/icon.png", "build/icon.ico"],
     "extraResources": [
-      { "from": "..", "to": "app", "filter": ["server.py", "pipeline.py", "requirements.txt", "static/**/*"] },
+      { "from": "..", "to": "app", "filter": ["server.py", "pipeline.py", "requirements.txt", "requirements-nodeps.txt", "static/**/*"] },
       { "from": "vendor/uv", "to": "uv" }
     ],
     "win": { "target": ["nsis"], "icon": "build/icon.ico" },

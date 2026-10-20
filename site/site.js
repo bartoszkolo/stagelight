@@ -35,16 +35,7 @@ async function pickInstaller() {
   }
   if (!card) return;
   card.classList.add("mine");
-  let link = card.querySelector(".btn.primary").href;
-  // Apple Silicon vs Intel: high-entropy hints are available in Chromium browsers; Safari can't tell,
-  // so it keeps the Apple Silicon default (every Mac sold since 2023) and shows both buttons.
-  if (os === "mac" && navigator.userAgentData?.getHighEntropyValues) {
-    try {
-      const { architecture } = await navigator.userAgentData.getHighEntropyValues(["architecture"]);
-      if (architecture === "x86") link = card.querySelectorAll(".btn")[1].href;
-    } catch {}
-  }
-  hero.href = link;
+  hero.href = card.querySelector(".btn.primary").href;
   hero.textContent = `Download for ${label}`;
   $("#heroPlatform").innerHTML = `Free · also for <a href="#download">other systems</a>`;
 }
