@@ -236,7 +236,11 @@ body:has(#player:fullscreen) #queue, body:has(#player.fake-fs) #queue { display:
 #stage { position: relative; aspect-ratio: 16/9; max-height: 74vh; width: 100%; overflow: hidden; cursor: pointer; }
 #video, #video iframe { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; border: 0; }
 #video { transition: filter .3s, transform .3s; }
-#video.fallback { background: center / cover no-repeat; filter: blur(6px) brightness(.6); transform: scale(1.06); }
+/* YouTube wouldn't play the video: its cover photo, gently dimmed and slowly zooming, so the stage stays alive */
+#video.fallback { background: center / cover no-repeat; filter: blur(1.5px) brightness(.55) saturate(1.1); animation: kenburns 28s ease-in-out infinite alternate; }
+#video.fallback iframe { display: none; } /* hide YouTube's own "sign in" / error screen */
+@keyframes kenburns { from { transform: scale(1.04) translate(0, 0); } to { transform: scale(1.16) translate(-2%, -1.5%); } }
+#toast .btn { margin: 10px auto 0; display: block; }
 /* demo backdrop: slow drifting stage lights instead of a music video */
 #video.demo-bg {
   background:
@@ -434,7 +438,7 @@ kbd { font: 600 11px/1 Outfit, sans-serif; padding: 4px 7px; border-radius: 6px;
   padding: 11px 18px; border-radius: 14px; background: rgba(16, 13, 26, .95); border: 1px solid var(--border);
   color: var(--text); font-size: 14px; box-shadow: 0 16px 40px -12px rgba(0,0,0,.7); text-align: center;
 }
-#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; } /* clickable once shown (action button) */
 
 /* website demo: invitation to download, under the player */
 .static-cta {

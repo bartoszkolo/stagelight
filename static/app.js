@@ -556,12 +556,8 @@ function setupVideo(id) {
         },
         // YouTube's own subtitles would duplicate our lyrics; they get re-enabled on each play.
         onStateChange: (e) => { if (e.data === YT.PlayerState.PLAYING) yt.unloadModule?.("captions"); },
-        onError: () => {
-          // Some music videos forbid embedding: show the thumbnail instead.
-          ytOk = false;
-          box.classList.add("fallback");
-          box.style.backgroundImage = `url(${thumb(id)})`;
-        },
+        // Embedding forbidden by the label, sign-in required, video removed…: cover photo instead.
+        onError: () => videoFallback("YouTube won't play this video here, so its cover is the backdrop. The karaoke works the same."),
       },
     });
   };
@@ -631,19 +627,46 @@ function seekVideo() {
 // If YouTube won't play the video here (sign-in or bot check, region lock…), the karaoke doesn't
 // need it: after a few seconds of the song playing without the video moving, show the stage lights.
 let videoStuckSince = 0;
-function videoFallback(message) {
+// YouTube songs get their cover photo (slowly zooming) as the backdrop; anything else the stage lights.
+async function videoFallback(message) {
   ytOk = false;
   yt?.stopVideo?.();
-  $("video").classList.add("demo-bg");
-  toast(message);
+  const box = $("video");
+  if (song && !song.bundled && song.id !== "demo") {
+    box.classList.add("fallback");
+    box.style.backgroundImage = `url(${await bestThumb(song.id)})`;
+  } else box.classList.add("demo-bg");
+  if (!message) return;
+  // In the desktop app, offer the person's own browser: they're signed in to YouTube there.
+  const desktop = window.stagelightDesktop;
+  toast(message, desktop && {
+    label: "Open in your browser",
+    run: () => desktop.openInBrowser(location.pathname + location.search),
+  });
 }
-function toast(message) {
+
+// maxresdefault (1280×720) only exists for some videos; YouTube answers 120×90 grey when it doesn't.
+function bestThumb(id) {
+  return new Promise((resolve) => {
+    const hd = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    const img = new Image();
+    img.onload = () => resolve(img.naturalWidth > 200 ? hd : thumb(id));
+    img.onerror = () => resolve(thumb(id));
+    img.src = hd;
+  });
+}
+
+function toast(message, action) {
   let el = $("toast");
   if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.append(el); }
-  el.textContent = message;
+  el.replaceChildren(message);
+  if (action) {
+    const b = button(action.label, "btn primary small", () => { action.run(); el.classList.remove("show"); });
+    el.append(b);
+  }
   el.classList.add("show");
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => el.classList.remove("show"), 6000);
+  toast.timer = setTimeout(() => el.classList.remove("show"), action ? 14000 : 6000);
 }
 
 setInterval(() => {
@@ -652,7 +675,7 @@ setInterval(() => {
   if (state === YT.PlayerState.PLAYING) videoStuckSince = 0;
   else if (!videoStuckSince) videoStuckSince = performance.now();
   else if (performance.now() - videoStuckSince > 7000) {
-    return videoFallback("YouTube didn't play the video here, so you get the stage lights instead. The karaoke works the same.");
+    return videoFallback("YouTube didn't play the video here (it may want you to sign in), so its cover is the backdrop. The karaoke works the same.");
   }
   if (state === YT.PlayerState.ENDED) return; // video shorter than the audio: leave it on its last frame
   if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) yt.playVideo();

@@ -201,10 +201,22 @@ function createSetupWindow() {
   return new Promise((resolve) => setupWin.webContents.once("did-finish-load", resolve));
 }
 
+let serverPort = null;
+
+// Same page, in the person's default browser (signed in to YouTube there, so music videos play).
+function openInBrowser(pathAndQuery = "/") {
+  if (!serverPort) return;
+  const p = pathAndQuery.startsWith("/") ? pathAndQuery : "/";
+  shell.openExternal(`http://127.0.0.1:${serverPort}${p}`);
+}
+ipcMain.on("open-in-browser", (_e, p) => openInBrowser(p));
+
 function createMainWindow(port) {
+  serverPort = port;
   mainWin = new BrowserWindow({
     width: 1280, height: 820, minWidth: 720, minHeight: 520, backgroundColor: "#07060d", title: "Stagelight",
     autoHideMenuBar: true, show: false, icon: ICON,
+    webPreferences: { preload: path.join(__dirname, "preload-main.js") },
   });
   mainWin.loadURL(`http://127.0.0.1:${port}/`);
   // Links to GitHub, LRCLIB etc. open in the normal browser, not inside the app.
@@ -220,6 +232,11 @@ function buildMenu() {
   const template = [
     ...(process.platform === "darwin" ? [{ role: "appMenu" }] : []),
     { label: "File", submenu: [
+      { label: "Open in Your Browser", click: () => {
+        // Keep the current song: pass the window's path and query along.
+        const u = mainWin ? new URL(mainWin.webContents.getURL()) : null;
+        openInBrowser(u ? u.pathname + u.search : "/");
+      } },
       { label: "Open Songs Folder", click: () => shell.openPath(path.join(HOME, "data")) },
       { label: "Show Log", click: () => shell.openPath(LOG) },
       { type: "separator" },
