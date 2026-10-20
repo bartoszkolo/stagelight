@@ -1,0 +1,55 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time! The more of this you fill in, the faster it gets fixed.
+        Please don't paste song lyrics or upload songs here; a link to the YouTube video is enough.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: I searched for a song, pressed Sing, and the processing screen stopped at "Remove vocals 42%"…
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: YouTube link (if it's about a specific song)
+      placeholder: https://www.youtube.com/watch?v=…
+  - type: dropdown
+    id: how
+    attributes:
+      label: How do you run Stagelight?
+      options:
+        - Desktop app (Windows)
+        - Desktop app (macOS, Apple Silicon)
+        - Desktop app (macOS, Intel)
+        - Desktop app (Linux AppImage)
+        - Desktop app (Linux .deb)
+        - From source (start.sh / start.ps1)
+        - Website demo (stagelight.cc)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Stagelight version
+      placeholder: "0.1.0"
+  - type: input
+    id: system
+    attributes:
+      label: Operating system and computer
+      description: GPU too, if you have an NVIDIA card.
+      placeholder: Windows 11, Intel i5 laptop, no GPU
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        Desktop app: File → Show Log, and paste the last ~50 lines.
+        From source: the terminal output.
+      render: text

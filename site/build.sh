@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds stagelight.cc into site/dist: the landing page, plus the real player as a static demo at /demo/.
-# Cloudflare Pages: build command `bash site/build.sh`, output directory `site/dist`.
+# Deploy (Cloudflare Workers static assets): `bash site/build.sh && npx wrangler deploy --config site/wrangler.jsonc`
 set -euo pipefail
 cd "$(dirname "$0")"
 

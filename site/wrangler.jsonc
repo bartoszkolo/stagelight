@@ -1,0 +1,20 @@
+// stagelight.cc: the landing page and in-browser demo, served as static assets by Cloudflare Workers.
+// Deploy:  bash site/build.sh && npx wrangler deploy --config site/wrangler.jsonc
+{
+  "$schema": "../desktop/node_modules/wrangler/config-schema.json",
+  "name": "stagelight",
+  "compatibility_date": "2026-10-01",
+  // worker.js only runs for the audio (Range support); everything else is served as plain assets.
+  "main": "./worker.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/demo/songs/*", "/demo/demo/*"]
+  },
+  // The domain must be a zone on the same Cloudflare account; DNS records are created automatically.
+  "routes": [
+    { "pattern": "stagelight.cc", "custom_domain": true },
+    { "pattern": "www.stagelight.cc", "custom_domain": true }
+  ]
+}

@@ -13,3 +13,5 @@ __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
+# wrangler local cache (contains the Cloudflare account name)
+.wrangler/

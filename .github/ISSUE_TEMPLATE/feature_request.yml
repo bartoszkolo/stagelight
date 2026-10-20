@@ -1,0 +1,23 @@
+name: Feature idea
+description: Something that would make karaoke night better
+labels: ["idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Stagelight to do?
+      placeholder: Let friends add songs to the queue from their phones…
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: When would you use it?
+      description: The situation behind the idea helps a lot more than the solution.
+      placeholder: At parties the laptop is by the TV and people keep walking over to type song names…
+  - type: checkboxes
+    id: roadmap
+    attributes:
+      label: Before you post
+      options:
+        - label: I checked the Roadmap in the README and the open issues

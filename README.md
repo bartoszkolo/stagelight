@@ -8,10 +8,18 @@
 The vocals come out, the lyrics come in, and they light up word by word while the music video plays.</p>
 
 <p align="center">
+  <a href="https://stagelight.cc"><b>stagelight.cc</b></a> ·
+  <a href="https://stagelight.cc/demo/">Try it in your browser</a> ·
+  <a href="#download">Download</a> ·
+  <a href="https://x.com/bartosz_kolo">@bartosz_kolo</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/bartoszkolo/stagelight/stargazers"><img src="https://img.shields.io/github/stars/bartoszkolo/stagelight?style=flat&color=ff4fa3&labelColor=15121f" alt="Stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-8b5cff?style=flat&labelColor=15121f" alt="MIT licence"></a>
   <img src="https://img.shields.io/badge/python-3.10%E2%80%933.12-ffd447?style=flat&labelColor=15121f" alt="Python 3.10 to 3.12">
   <img src="https://img.shields.io/badge/runs-100%25%20locally-38e1ff?style=flat&labelColor=15121f" alt="Runs locally">
+  <a href="https://buymeacoffee.com/bartoszkolo"><img src="https://img.shields.io/badge/support-%E2%98%95%20buy%20me%20a%20coffee-ffd447?style=flat&labelColor=15121f" alt="Buy me a coffee"></a>
 </p>
 
 Stagelight turns any song on YouTube into a karaoke track on your own computer. An AI model strips
@@ -159,7 +167,11 @@ minute song with the default model takes **about 5–8 minutes** end to end on t
 server.py        FastAPI app: job queue, library, static files
 pipeline.py      download → separate → lyrics → align
 static/          the whole front end (vanilla JS, no build step)
-static/demo/     demo song: original lyrics and a synth backing track
+static/songs/    built-in songs (freely licensed, pre-separated)
+static/demo/     fallback demo: original lyrics and a synth backing track
+desktop/         Electron app (first-run engine install, builds via GitHub Actions)
+site/            stagelight.cc: landing + in-browser demo (Cloudflare Workers static assets)
+tools/           bundle_song.py, how the built-in songs are made
 data/            your songs: stems, lyrics, cache (git-ignored)
 models/          separation models, downloaded on first use (git-ignored)
 ```
@@ -200,4 +212,5 @@ Built on the shoulders of
 [FastAPI](https://fastapi.tiangolo.com) and the YouTube IFrame Player API.
 Built in a couple of evenings with [Claude Code](https://claude.com/claude-code).
 
-MIT © bartoszkolo
+MIT © bartoszkolo · Follow along on X: [@bartosz_kolo](https://x.com/bartosz_kolo) · If Stagelight made your
+night, [buy me a coffee](https://buymeacoffee.com/bartoszkolo) ☕

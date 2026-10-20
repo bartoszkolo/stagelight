@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Try the demo in your browser
+    url: https://stagelight.cc/demo/
+    about: See the player in action without installing anything.
+  - name: Say hi on X
+    url: https://x.com/bartosz_kolo
+    about: Questions, karaoke stories and screenshots are very welcome.
