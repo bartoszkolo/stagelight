@@ -331,10 +331,10 @@ function renderProgress(job, model) {
     li.querySelector("small").textContent = "";
   });
   $("procError").hidden = true;
+  const p = job.progress;
   // Visible in the browser tab while you do something else during the wait.
   document.title = `${p != null && step === "separate" ? Math.round(p * 100) + "% · " : ""}${
     step ? $(`steps`).querySelector(`[data-step="${step}"] span`).textContent : "Waiting"} · Stagelight`;
-  const p = job.progress;
   const fill = $("barFill");
   fill.classList.toggle("indeterminate", p == null);
   fill.style.width = `${(p || 0) * 100}%`;

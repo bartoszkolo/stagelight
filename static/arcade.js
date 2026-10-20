@@ -218,10 +218,10 @@
     $("resAcc").textContent = `${Math.round(acc * 100)}%`;
     $("resCombo").textContent = String(bestCombo);
     $("resPerfect").textContent = String(perfect);
-    $("results").hidden = false;
+    $("arcadeResults").hidden = false;
   }
-  $("resAgain").onclick = () => { $("results").hidden = true; reset(); audio.currentTime = 0; audio.play(); };
-  $("resClose").onclick = () => { $("results").hidden = true; };
+  $("resAgain").onclick = () => { $("arcadeResults").hidden = true; reset(); audio.currentTime = 0; audio.play(); };
+  $("resClose").onclick = () => { $("arcadeResults").hidden = true; };
 
   // ---------------------------------------------------------------- note lane
 
@@ -305,7 +305,7 @@
     get on() { return on; },
     // New song while arcade is on: fetch its melody and start a fresh score.
     async songChanged() {
-      $("results").hidden = true;
+      $("arcadeResults").hidden = true;
       if (!on) return;
       melody = await loadMelody(song);
       if (!melody) return disable();

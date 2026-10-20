@@ -490,7 +490,7 @@ kbd { font: 600 11px/1 Outfit, sans-serif; padding: 4px 7px; border-radius: 6px;
 @media (max-width: 760px) { #arcadeTop { grid-template-columns: 1fr 88px; height: clamp(56px, 16%, 110px); } .mic-meter span, .hud-label { display: none; } #arcadeHud { padding: 6px 10px; } }
 /* compact score panel when the strip is short */
 @media (max-height: 700px) { .hud-label { display: none; } #arcadeHud { padding: 6px 12px; } .mic-meter { margin-top: 2px; } }
-#results { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(7, 6, 13, .78); backdrop-filter: blur(10px); }
+#arcadeResults { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(7, 6, 13, .78); backdrop-filter: blur(10px); }
 .results-card { text-align: center; padding: 30px 40px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); min-width: min(420px, 90%); }
 .results-card h2 { margin: 6px 0 4px; font-size: 22px; }
 .rank {
