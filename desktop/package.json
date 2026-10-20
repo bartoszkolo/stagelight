@@ -1,0 +1,38 @@
+{
+  "name": "stagelight",
+  "productName": "Stagelight",
+  "version": "0.1.0",
+  "description": "Search any song, get karaoke. AI vocal removal and auto-synced lyrics, running on your computer.",
+  "homepage": "https://github.com/bartoszkolo/stagelight",
+  "author": "bartoszkolo <9589154+bartoszkolo@users.noreply.github.com>",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "io.github.bartoszkolo.stagelight",
+    "productName": "Stagelight",
+    "artifactName": "Stagelight-${version}-${os}-${arch}.${ext}",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "setup.html", "package.json", "build/icon.png", "build/icon.ico"],
+    "extraResources": [
+      { "from": "..", "to": "app", "filter": ["server.py", "pipeline.py", "requirements.txt", "static/**/*"] },
+      { "from": "vendor/uv", "to": "uv" }
+    ],
+    "win": { "target": ["nsis"], "icon": "build/icon.ico" },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true },
+    "mac": { "target": ["dmg"], "category": "public.app-category.music", "icon": "build/icon.png", "identity": null },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "AudioVideo",
+      "icon": "build/icon.png",
+      "maintainer": "bartoszkolo <9589154+bartoszkolo@users.noreply.github.com>"
+    }
+  }
+}

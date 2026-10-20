@@ -330,7 +330,13 @@ body:has(#player:fullscreen) #queue, body:has(#player.fake-fs) #queue { display:
   transform: translateX(105%); transition: transform .3s cubic-bezier(.2, .8, .2, 1);
   display: flex; flex-direction: column;
 }
-#player.settings-open #settings { transform: none; }
+#player.settings-open #settings, #settings.open { transform: none; }
+.brand #homeSettings { margin-left: auto; color: var(--muted); }
+.brand #homeSettings:hover { color: var(--text); }
+/* opened from the home screen: the same drawer, floating over the page */
+#settings.floating { position: fixed; z-index: 70; box-shadow: -30px 0 80px rgba(0,0,0,.6); }
+#scrim { position: fixed; inset: 0; z-index: 69; background: rgba(5, 4, 10, .5); opacity: 0; pointer-events: none; transition: opacity .25s; }
+body.settings-floating #scrim { opacity: 1; pointer-events: auto; }
 .set-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 6px 22px; }
 .set-head h3 { margin: 0; font-size: 18px; }
 .set-body { overflow-y: auto; padding: 0 22px 24px; scrollbar-width: thin; }

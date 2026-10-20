@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>Stagelight</title>
+<style>
+  :root { --bg: #07060d; --text: #f6f4ff; --muted: #9b95b8; --accent: #ff4fa3; --accent-2: #8b5cff; --border: rgba(255,255,255,.09); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(60% 50% at 20% 0%, rgba(139,92,255,.25), transparent 70%),
+                radial-gradient(50% 40% at 90% 10%, rgba(255,79,163,.2), transparent 70%), var(--bg);
+    color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif;
+    display: flex; flex-direction: column; padding: 32px 34px 24px; user-select: none;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 22px; }
+  .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); position: relative; box-shadow: 0 0 30px rgba(255,79,163,.5); }
+  .logo::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: #fff; }
+  h1 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 14px 0 22px; }
+  ol { list-style: none; padding: 0; margin: 0 0 18px; display: grid; gap: 14px; }
+  li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: start; color: var(--muted); }
+  li b { display: block; font-weight: 600; }
+  li small { color: #6d6789; }
+  li i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.18); margin-top: 1px; }
+  li.active { color: var(--text); }
+  li.active i { border-color: var(--accent); border-top-color: transparent; animation: spin .9s linear infinite; }
+  li.done i { border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; }
+  li.done i::after { content: "✓"; color: #fff; font-size: 12px; font-weight: 900; font-style: normal; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #log {
+    flex: 1; min-height: 0; overflow: hidden; margin: 0; padding: 10px 12px; border-radius: 12px;
+    background: rgba(0,0,0,.35); border: 1px solid var(--border); color: #7f7a99;
+    font: 11px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .note { color: #6d6789; font-size: 12px; margin-top: 12px; }
+  #fail { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,90,120,.1); border: 1px solid rgba(255,90,120,.3); }
+  #fail p { margin: 0 0 10px; color: #ffb3c1; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 999px; padding: 8px 16px; cursor: pointer; color: #fff; margin-right: 6px; }
+  .primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .ghost { background: rgba(255,255,255,.08); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+  <div class="brand"><span class="logo"></span>Stagelight</div>
+  <h1 id="headline">Starting up…</h1>
+  <ol>
+    <li data-step="python"><i></i><div><b>Python runtime</b><small>a private copy, nothing installed system-wide</small></div></li>
+    <li data-step="packages"><i></i><div><b>AI engine</b><small id="pkgDetail">vocal separation, lyrics transcription</small></div></li>
+    <li data-step="start"><i></i><div><b>Start</b><small id="startDetail">opening Stagelight</small></div></li>
+  </ol>
+  <pre id="log"></pre>
+  <div id="fail">
+    <p id="failMsg"></p>
+    <button class="primary" id="retry">Try again</button><button class="ghost" id="openLog">Open log</button>
+  </div>
+  <div class="note" id="note">One-time setup. Next time Stagelight opens in seconds.</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const lines = [];
+  const MAX = 14;
+  stagelight.on("first-run", () => { $("headline").textContent = "Setting up the AI engine (first launch only)"; });
+  stagelight.on("log", (line) => {
+    lines.push(line);
+    if (lines.length > MAX) lines.shift();
+    $("log").textContent = lines.join("\n");
+  });
+  stagelight.on("step", ({ id, state, detail }) => {
+    const li = document.querySelector(`[data-step="${id}"]`);
+    li.className = state;
+    if (detail && id === "packages") $("pkgDetail").textContent = detail;
+    if (detail && id === "start") $("startDetail").textContent = detail;
+    if (id === "start" && state === "active") $("headline").textContent = "Starting Stagelight…";
+  });
+  stagelight.on("failed", ({ message }) => {
+    $("fail").style.display = "block";
+    $("failMsg").textContent = message;
+    $("note").style.display = "none";
+    document.querySelectorAll("li.active").forEach((li) => (li.className = ""));
+  });
+  stagelight.on("reset", () => {
+    $("fail").style.display = "none";
+    $("note").style.display = "";
+    lines.length = 0;
+    $("log").textContent = "";
+  });
+  $("retry").onclick = () => stagelight.retry();
+  $("openLog").onclick = () => stagelight.openLog();
+</script>
+</body>
+</html>

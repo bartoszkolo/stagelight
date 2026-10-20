@@ -20,16 +20,18 @@ import imageio_ffmpeg
 import numpy as np
 import soundfile as sf
 
-DATA = Path(__file__).parent / "data"
+# The desktop app installs the code read-only and points these at the user's app-data folder.
+_HERE = Path(__file__).parent
+DATA = Path(os.environ.get("STAGELIGHT_DATA") or _HERE / "data")
 
 # audio-separator / pydub look for a plain "ffmpeg" on PATH. Use the system one if there is one,
 # otherwise expose the binary bundled with imageio-ffmpeg under that name.
-_BIN = Path(__file__).parent / "bin"
+_BIN = Path(os.environ.get("STAGELIGHT_BIN") or _HERE / "bin")
 FFMPEG = shutil.which("ffmpeg")
 if not FFMPEG:
     FFMPEG = str(_BIN / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg"))
     if not Path(FFMPEG).exists():
-        _BIN.mkdir(exist_ok=True)
+        _BIN.mkdir(parents=True, exist_ok=True)
         shutil.copy(imageio_ffmpeg.get_ffmpeg_exe(), FFMPEG)
     os.environ["PATH"] = str(_BIN) + os.pathsep + os.environ.get("PATH", "")
 SR = 44100
@@ -54,6 +56,10 @@ MAX_DURATION = 900  # 15 min: longer videos are mixes or livestreams, not songs
 
 def _js_runtimes() -> dict:
     # YouTube needs a JavaScript runtime to solve its player challenges; use whichever is installed.
+    # The desktop app ships one (Electron runs as Node with ELECTRON_RUN_AS_NODE=1). Prefer it: a
+    # system Node may be older than the version yt-dlp requires.
+    if os.environ.get("STAGELIGHT_NODE"):
+        return {"node": {"path": os.environ["STAGELIGHT_NODE"]}}
     return {name: {} for name in ("deno", "node", "bun") if shutil.which(name)}
 
 
@@ -144,7 +150,7 @@ SEPARATION_MODELS = {
 }
 DEFAULT_MODEL = "karaoke"
 MDX_PARAMS = {"hop_length": 1024, "segment_size": 256, "overlap": 0.1, "batch_size": 1, "enable_denoise": False}
-MODEL_DIR = Path(__file__).parent / "models"
+MODEL_DIR = Path(os.environ.get("STAGELIGHT_MODELS") or _HERE / "models")
 _separator = None
 _loaded_model = None
 

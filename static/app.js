@@ -105,14 +105,30 @@ $("resetSettings").onclick = () => { settings = { ...DEFAULTS, model: settings.m
 $("modelSelect").addEventListener("change", (e) => set("model", e.target.value));
 
 const player = $("player");
-const openSettings = (open = !player.classList.contains("settings-open")) => {
-  player.classList.toggle("settings-open", open);
-  $("settings").inert = !open; // keep Tab out of the drawer while it's closed
+// One drawer, two homes: inside the player (so it works in fullscreen), or floating over the home
+// screen. The element is moved, so its listeners come along.
+const settingsOpen = () => $("settings").classList.contains("open");
+const openSettings = (open = !settingsOpen()) => {
+  const drawer = $("settings");
+  const inPlayer = !$("playerView").hidden;
+  if (open) {
+    if (inPlayer && drawer.parentElement !== player) player.append(drawer);
+    if (!inPlayer && drawer.parentElement !== document.body) document.body.append(drawer);
+    drawer.classList.toggle("floating", !inPlayer);
+  }
+  drawer.classList.toggle("open", open);
+  player.classList.toggle("settings-open", open && inPlayer);
+  document.body.classList.toggle("settings-floating", open && !inPlayer);
+  drawer.inert = !open; // keep Tab out of the drawer while it's closed
   if (open) { player.classList.remove("idle"); $("closeSettings").focus(); }
-  else if ($("settings").contains(document.activeElement) || document.activeElement === document.body) $("openSettings").focus();
+  else if (drawer.contains(document.activeElement) || document.activeElement === document.body) {
+    (inPlayer ? $("openSettings") : $("homeSettings")).focus();
+  }
 };
 $("settings").inert = true;
 $("openSettings").onclick = () => openSettings();
+$("homeSettings").onclick = () => openSettings(true);
+$("scrim").onclick = () => openSettings(false);
 $("closeSettings").onclick = () => openSettings(false);
 
 // ============================================================ separation models
@@ -167,6 +183,7 @@ function button(label, cls, onclick) {
 // ============================================================ views & jobs
 
 function show(view) {
+  if (settingsOpen()) openSettings(false);
   for (const v of ["home", "processing", "playerView"]) $(v).hidden = v !== view;
   document.body.classList.toggle("singing", view === "playerView");
   if (view !== "playerView") { audio.pause(); exitFullscreen(); }
@@ -576,10 +593,11 @@ setInterval(() => {
 document.addEventListener("keydown", (e) => {
   if (e.target.matches("input[type=text], input:not([type]), select") || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === "Escape") {
-    if (player.classList.contains("settings-open")) openSettings(false);
+    if (settingsOpen()) openSettings(false);
     else exitFullscreen();
     return;
   }
+  if (e.code === "KeyS" && !$("home").hidden) { openSettings(); return; }
   if ($("playerView").hidden) return;
   const onRange = e.target.matches("input[type=range]");
   // Space/Enter on a focused button or toggle should press it, not play/pause.

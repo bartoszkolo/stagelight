@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# uv binary for the target platform; CI downloads it before packaging
+vendor/

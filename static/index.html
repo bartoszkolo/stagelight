@@ -11,6 +11,7 @@
 </head>
 <body>
 <div id="ambient"></div>
+<div id="scrim"></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></symbol>
@@ -26,7 +27,9 @@
 
 <!-- ============================================================ home -->
 <section id="home" class="view">
-  <header class="brand"><span class="logo"></span>Stagelight</header>
+  <header class="brand"><span class="logo"></span>Stagelight
+    <button id="homeSettings" class="icon-btn" title="Settings (S)" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+  </header>
   <div class="hero">
     <h1>Sing <em>anything.</em></h1>
     <p>Search for a song or paste a YouTube link. We strip the vocals, find the lyrics and sync them to the music video.</p>
