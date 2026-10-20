@@ -463,7 +463,8 @@ function switchStems(model, fromStart = false) {
   const ctl = new AbortController();
   pendingSwitch = { ctl, resume };
   currentModel = model;
-  history.replaceState(null, "", `?v=${song.id}&m=${model}`);
+  // Only YouTube songs live at ?v=…; built-in songs and the demo keep their own address.
+  if (!STATIC && !song.bundled && song.id !== "demo") history.replaceState(null, "", `?v=${song.id}&m=${model}`);
   const base = song.media || `/media/${song.id}/stems/${model}`;
   audio.src = `${base}/instrumental.mp3`;
   vocals.src = `${base}/vocals.mp3`;
