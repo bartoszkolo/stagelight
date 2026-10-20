@@ -103,15 +103,24 @@
       </div>
       <div id="countdown"></div>
       <div id="bigPlay"><svg><use href="#i-play"/></svg></div>
-      <!-- arcade mode: note lane, score and per-line rating -->
-      <canvas id="lane" hidden></canvas>
-      <div id="arcadeHud" hidden><div id="score">0</div><div id="combo"></div></div>
-      <div id="rating" aria-live="polite"></div>
+      <!-- arcade mode: note lane + score panel along the top, per-line rating above the lyrics -->
+      <div id="arcadeTop" hidden>
+        <div class="lane-wrap"><canvas id="lane"></canvas></div>
+        <div id="arcadeHud">
+          <div class="hud-label">Score</div>
+          <div id="score">0</div>
+          <div id="combo"></div>
+          <div class="mic-meter" title="Microphone level"><span>🎤</span><i><b id="micLevel"></b></i></div>
+          <div id="micHint" hidden>Can't hear you. Sing up!</div>
+        </div>
+      </div>
+      <div id="rating" aria-live="polite"><b id="ratingText"></b><span id="ratingPts"></span></div>
     </div>
     <div id="results" hidden>
       <div class="results-card">
         <div class="eyebrow">Arcade</div>
         <h2 id="resSong"></h2>
+        <div id="resRank" class="rank" aria-label="Rank"></div>
         <div id="resStars" class="stars" aria-label="Stars"></div>
         <div class="res-score"><b id="resScore">0</b><span id="resBest"></span></div>
         <dl class="res-stats">

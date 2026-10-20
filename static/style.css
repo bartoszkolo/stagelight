@@ -438,25 +438,53 @@ kbd { font: 600 11px/1 Outfit, sans-serif; padding: 4px 7px; border-radius: 6px;
 }
 .arcade-btn:hover { color: var(--text); background: var(--surface-2); }
 .arcade-btn.on { color: #fff; background: var(--grad); border-color: transparent; box-shadow: 0 6px 20px -6px rgba(255,79,163,.7); }
-#lane { position: absolute; left: 4%; right: 4%; top: 5%; width: 92%; height: 26%; pointer-events: none; }
-#stage.center #lane { top: 4%; height: 22%; }
-#arcadeHud { position: absolute; right: 4%; top: calc(5% + 26% + 10px); text-align: right; pointer-events: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.8)); }
-#score { font-size: clamp(22px, 3vw, 40px); font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-#combo { font-size: clamp(12px, 1.4vw, 16px); font-weight: 700; color: var(--hl); min-height: 1.2em; }
-#rating {
-  position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none;
-  font-size: clamp(28px, 5vw, 64px); font-weight: 900; letter-spacing: -.02em; filter: drop-shadow(0 4px 14px rgba(0,0,0,.7));
-  transition: transform .25s cubic-bezier(.3, 1.6, .5, 1), opacity .2s;
+/* top strip: note lane + score panel, one unit */
+#arcadeTop {
+  position: absolute; left: 3%; right: 3%; top: 4%; height: 27%; pointer-events: none;
+  display: grid; grid-template-columns: 1fr clamp(120px, 15%, 190px); grid-template-rows: minmax(0, 1fr); gap: 10px;
 }
-#rating.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-#rating.r-perfect { background: linear-gradient(90deg, var(--gold, #ffd447), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-#rating.r-great { color: #8dff6a; }
-#rating.r-good { color: #38e1ff; }
-#rating.r-miss { color: rgba(255,255,255,.55); font-size: clamp(20px, 3vw, 40px); }
+#stage.center #arcadeTop { height: 22%; }
+/* the canvas sits absolutely inside its cell, so its pixel size can't feed back into the layout */
+.lane-wrap { position: relative; min-width: 0; min-height: 0; }
+#lane { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#arcadeHud { min-height: 0; overflow: hidden; }
+#arcadeHud {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 10px 14px; border-radius: 14px;
+  background: rgba(10, 8, 18, .55); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.08);
+}
+.hud-label { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+#score { font-size: clamp(22px, 2.6vw, 38px); font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.05; }
+#combo { font-size: clamp(11px, 1.2vw, 14px); font-weight: 800; color: var(--hl); min-height: 1.3em; }
+#combo.bump { animation: bump .35s cubic-bezier(.3, 1.8, .5, 1); }
+@keyframes bump { 40% { transform: scale(1.25); } }
+.mic-meter { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 4px; }
+.mic-meter i { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+.mic-meter b { display: block; height: 100%; width: 0; border-radius: 3px; background: linear-gradient(90deg, #8dff6a, var(--hl)); transition: width .08s; }
+#micHint { font-size: 11px; font-weight: 700; color: #ff8fa8; margin-top: 2px; }
+/* per-line rating: right above the lyrics, with the points it earned */
+#rating {
+  position: absolute; left: 50%; bottom: 40%; transform: translate(-50%, 10px) scale(.7); opacity: 0; pointer-events: none;
+  text-align: center; filter: drop-shadow(0 4px 14px rgba(0,0,0,.75)); transition: transform .28s cubic-bezier(.3, 1.6, .5, 1), opacity .2s;
+}
+#stage.center #rating { bottom: auto; top: 30%; }
+#rating.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+#rating b { display: block; font-size: clamp(26px, 4vw, 54px); font-weight: 900; letter-spacing: -.02em; line-height: 1; }
+#rating span { display: block; font-size: clamp(13px, 1.4vw, 18px); font-weight: 800; color: var(--text); opacity: .85; margin-top: 4px; }
+#rating.r-perfect b { background: linear-gradient(90deg, var(--hl), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#rating.r-great b { color: #8dff6a; }
+#rating.r-good b { color: #38e1ff; }
+#rating.r-miss b { color: rgba(255,255,255,.55); font-size: clamp(18px, 2.6vw, 34px); }
+@media (max-width: 760px) { #arcadeTop { grid-template-columns: 1fr 96px; height: 30%; } .mic-meter span { display: none; } }
 #results { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(7, 6, 13, .78); backdrop-filter: blur(10px); }
 .results-card { text-align: center; padding: 30px 40px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); min-width: min(420px, 90%); }
 .results-card h2 { margin: 6px 0 4px; font-size: 22px; }
-.stars { font-size: 40px; letter-spacing: 6px; color: var(--hl); filter: drop-shadow(0 0 10px var(--hl)); margin: 6px 0; }
+.rank {
+  font-size: 96px; font-weight: 900; line-height: 1; margin: 8px 0 0; letter-spacing: -.04em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 8px 30px rgba(255, 79, 163, .45)); animation: rankIn .6s cubic-bezier(.3, 1.6, .5, 1);
+}
+@keyframes rankIn { from { transform: scale(.3) rotate(-12deg); opacity: 0; } }
+.stars { font-size: 34px; letter-spacing: 6px; color: var(--hl); filter: drop-shadow(0 0 10px var(--hl)); margin: 2px 0 6px; }
 .res-score b { display: block; font-size: 56px; font-weight: 900; letter-spacing: -.03em; line-height: 1; }
 .res-score span { color: var(--accent); font-weight: 700; font-size: 14px; }
 .res-stats { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; max-width: 240px; margin: 18px auto 22px; font-size: 14px; text-align: left; }

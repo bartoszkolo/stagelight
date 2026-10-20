@@ -15,6 +15,9 @@
   let ctx = null, stream = null, analyser = null, buf = null;
   let stats = new Map(); // line index -> { targets, hits, done }
   let score = 0, combo = 0, bestCombo = 0, perfect = 0, totalTargets = 0, totalHits = 0;
+  let shownScore = 0;       // what the counter displays: it runs up to `score`
+  let micRms = 0;           // input level, for the meter
+  let silentSince = 0;      // when you last went quiet during a sung part (for "can't hear you")
   const trail = []; // recent mic pitches: { t, midi, hit }
 
   const lane = $("lane"), g = lane.getContext("2d");
@@ -44,7 +47,7 @@
     on = true;
     $("arcadeBtn").classList.add("on");
     $("arcadeBtn").setAttribute("aria-pressed", "true");
-    lane.hidden = $("arcadeHud").hidden = false;
+    $("arcadeTop").hidden = false;
     player.classList.add("arcade");
     toast("Arcade on: sing along and hit the notes! Headphones give the most accurate score.");
   }
@@ -56,7 +59,7 @@
     stream = ctx = analyser = null;
     $("arcadeBtn").classList.remove("on");
     $("arcadeBtn").setAttribute("aria-pressed", "false");
-    lane.hidden = $("arcadeHud").hidden = true;
+    $("arcadeTop").hidden = true;
     player.classList.remove("arcade");
   }
 
@@ -79,11 +82,13 @@
 
   function reset() {
     stats = new Map();
-    score = combo = bestCombo = perfect = totalTargets = totalHits = 0;
+    score = combo = bestCombo = perfect = totalTargets = totalHits = shownScore = 0;
+    silentSince = 0;
     trail.length = 0;
     center = melody?.center ?? 60;
     $("score").textContent = "0";
     $("combo").textContent = "";
+    $("micHint").hidden = true;
   }
 
   // ---------------------------------------------------------------- pitch detection (YIN)
@@ -93,7 +98,8 @@
     analyser.getFloatTimeDomainData(buf);
     let rms = 0;
     for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
-    if (Math.sqrt(rms / buf.length) < 0.012) return null;
+    micRms = Math.sqrt(rms / buf.length);
+    if (micRms < 0.012) return null;
     // Halve the rate: plenty for a voice (up to ~1 kHz) and 4x less work.
     const sr = ctx.sampleRate / 2, n = buf.length / 2, x = new Float32Array(n);
     for (let i = 0; i < n; i++) x[i] = buf[i * 2];
@@ -147,6 +153,10 @@
     }
     if (mic != null) trail.push({ t: now, midi: mic, hit });
     while (trail.length && trail[0].t < now - 1.5) trail.shift();
+    // Nudge after a few seconds of silence while the song wants you to sing.
+    if (target != null && mic == null) silentSince ||= now;
+    if (mic != null) silentSince = 0;
+    $("micHint").hidden = !(silentSince && now - silentSince > 4);
     finishLines(t);
   }
 
@@ -162,19 +172,23 @@
       combo = label === "Miss" ? 0 : combo + 1;
       bestCombo = Math.max(bestCombo, combo);
       if (label === "Perfect") perfect++;
-      score += Math.round(ratio * 1000 * (1 + 0.1 * Math.min(combo, 10)));
-      showRating(label);
+      const points = Math.round(ratio * 1000 * (1 + 0.1 * Math.min(combo, 10)));
+      score += points;
+      showRating(label, points);
+      const c = $("combo");
+      c.textContent = combo >= 2 ? `🔥 ${combo}× combo` : "";
+      c.classList.remove("bump");
+      if (combo >= 2) { void c.offsetWidth; c.classList.add("bump"); } // restart the pop animation
     }
-    $("score").textContent = score.toLocaleString("en");
-    $("combo").textContent = combo >= 2 ? `${combo}× combo` : "";
   }
 
-  function showRating(label) {
+  function showRating(label, points) {
     const el = $("rating");
-    el.textContent = label === "Miss" ? "Miss" : `${label}!`;
+    $("ratingText").textContent = label === "Miss" ? "Miss" : `${label}!`;
+    $("ratingPts").textContent = points ? `+${points.toLocaleString("en")}` : "";
     el.className = `show r-${label.toLowerCase()}`;
     clearTimeout(showRating.timer);
-    showRating.timer = setTimeout(() => (el.className = ""), 900);
+    showRating.timer = setTimeout(() => (el.className = ""), 1100);
   }
 
   // Seeking back lets you sing those lines again.
@@ -197,6 +211,7 @@
     const record = score > best;
     if (record) try { localStorage.setItem(key, String(score)); } catch {}
     $("resSong").textContent = song.title;
+    $("resRank").textContent = acc >= 0.75 ? "S" : acc >= 0.6 ? "A" : acc >= 0.45 ? "B" : acc >= 0.3 ? "C" : "D";
     $("resStars").textContent = "★".repeat(stars) + "☆".repeat(5 - stars);
     $("resScore").textContent = score.toLocaleString("en");
     $("resBest").textContent = record ? (best ? "New best!" : "First score!") : `Best: ${best.toLocaleString("en")}`;
@@ -225,27 +240,46 @@
     const yOf = (m) => h * 0.9 - ((fold(m) - (center - span / 2)) / span) * h * 0.8;
     const hl = getComputedStyle(document.documentElement).getPropertyValue("--hl").trim() || "#ffd447";
 
-    g.fillStyle = "rgba(0,0,0,.35)";
+    g.fillStyle = "rgba(10,8,18,.55)";
     g.beginPath(); g.roundRect(0, 0, w, h, 14); g.fill();
-    const barH = Math.max(6, h / 22);
+    // faint guide lines, one per 4 semitones
+    g.strokeStyle = "rgba(255,255,255,.05)"; g.lineWidth = 1;
+    for (let s = 2; s < span; s += 4) { const y = h * 0.9 - (s / span) * h * 0.8; g.beginPath(); g.moveTo(8, y); g.lineTo(w - 8, y); g.stroke(); }
+
+    // How well the last moments went: the part of the current note you've sung fills gold or red.
+    const recent = trail.filter((p) => p.t > now - 0.35);
+    const recentHit = recent.length ? recent.filter((p) => p.hit).length / recent.length : 0;
+    const barH = Math.max(7, h / 18);
     for (const [t0, t1, m] of melody.notes) {
       if (t1 < now - PAST || t0 > now + AHEAD) continue;
-      const x0 = Math.max(4, xOf(t0)), x1 = Math.min(w - 4, xOf(t1));
+      const x0 = Math.max(6, xOf(t0)), x1 = Math.min(w - 6, xOf(t1));
       if (x1 <= x0) continue;
-      const live = t0 <= now && t1 >= now;
-      g.globalAlpha = t1 < now ? 0.35 : 1;
-      g.fillStyle = live ? hl : "rgba(255,255,255,.55)";
-      if (live) { g.shadowColor = hl; g.shadowBlur = 12; }
-      g.beginPath(); g.roundRect(x0, yOf(m) - barH / 2, x1 - x0, barH, barH / 2); g.fill();
-      g.shadowBlur = 0;
+      const y = yOf(m) - barH / 2, live = t0 <= now && t1 >= now;
+      g.globalAlpha = t1 < now ? 0.3 : 1;
+      const grad = g.createLinearGradient(0, y, 0, y + barH);
+      grad.addColorStop(0, "rgba(255,255,255,.75)"); grad.addColorStop(1, "rgba(255,255,255,.4)");
+      g.fillStyle = grad;
+      g.beginPath(); g.roundRect(x0, y, x1 - x0, barH, barH / 2); g.fill();
+      if (live) {
+        const xs = Math.min(x1, xNow);
+        g.fillStyle = recentHit > 0.4 ? hl : "rgba(255,110,140,.9)";
+        g.shadowColor = g.fillStyle; g.shadowBlur = 14;
+        g.beginPath(); g.roundRect(x0, y, Math.max(barH, xs - x0), barH, barH / 2); g.fill();
+        g.shadowBlur = 0;
+      }
     }
     g.globalAlpha = 1;
     // "now" line, then your voice: hits glow in the highlight colour
-    g.fillStyle = "rgba(255,255,255,.6)";
-    g.fillRect(xNow - 1, 6, 2, h - 12);
+    const nowGrad = g.createLinearGradient(0, 0, 0, h);
+    nowGrad.addColorStop(0, "rgba(255,255,255,0)"); nowGrad.addColorStop(0.5, "rgba(255,255,255,.8)"); nowGrad.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = nowGrad;
+    g.fillRect(xNow - 1, 4, 2, h - 8);
     for (const p of trail) {
-      g.fillStyle = p.hit ? hl : "rgba(255,120,150,.8)";
-      g.beginPath(); g.arc(xOf(p.t), yOf(p.midi), p.t > now - 0.05 ? 6 : 3, 0, Math.PI * 2); g.fill();
+      const latest = p === trail.at(-1) && p.t > now - 0.08;
+      g.fillStyle = p.hit ? hl : "rgba(255,120,150,.85)";
+      if (latest) { g.shadowColor = g.fillStyle; g.shadowBlur = 16; }
+      g.beginPath(); g.arc(xOf(p.t), yOf(p.midi), latest ? 7 : 2.5, 0, Math.PI * 2); g.fill();
+      g.shadowBlur = 0;
     }
   }
 
@@ -253,6 +287,13 @@
     requestAnimationFrame(loop);
     if (!on || !melody) return;
     if (!audio.paused && ctx) tick();
+    else micRms = 0;
+    // The counter runs up to the score instead of jumping.
+    if (shownScore !== score) {
+      shownScore = Math.abs(score - shownScore) < 2 ? score : shownScore + (score - shownScore) * 0.15;
+      $("score").textContent = Math.round(shownScore).toLocaleString("en");
+    }
+    $("micLevel").style.width = `${Math.min(100, micRms * 900)}%`;
     draw();
   }
   requestAnimationFrame(loop);
