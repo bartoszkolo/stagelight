@@ -170,6 +170,37 @@ def song_melody(vid: str):
     return data
 
 
+_video_fetching: set[str] = set()
+
+
+def _fetch_video_bg(vid: str):
+    try:
+        pipeline.fetch_video(vid, pipeline.DATA / vid)
+    finally:
+        with lock:
+            _video_fetching.discard(vid)
+
+
+@app.get("/api/songs/{vid}/video")
+def song_video(vid: str):
+    if not pipeline.video_id(vid) or not (pipeline.DATA / vid).is_dir():
+        raise HTTPException(404)
+    v = pipeline.video_file(pipeline.DATA / vid)
+    return {"video": v.name if v else None, "fetching": vid in _video_fetching}
+
+
+@app.post("/api/songs/{vid}/video")
+def fetch_song_video(vid: str):
+    """Songs processed before videos were downloaded get their picture in the background."""
+    if not pipeline.video_id(vid) or not (pipeline.DATA / vid).is_dir():
+        raise HTTPException(404)
+    with lock:
+        if pipeline.video_file(pipeline.DATA / vid) is None and vid not in _video_fetching:
+            _video_fetching.add(vid)
+            threading.Thread(target=_fetch_video_bg, args=(vid,), daemon=True).start()
+    return song_video(vid)
+
+
 class OffsetIn(BaseModel):
     offset: float
 

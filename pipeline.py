@@ -84,6 +84,45 @@ def search(query: str, limit: int = 12) -> list[dict]:
     return results
 
 
+VIDEO_FORMAT = (  # picture only, small: H.264 MP4 plays everywhere (Safari too), VP9/AV1 as fallbacks
+    "bv*[height<=480][vcodec^=avc1][ext=mp4]/bv*[height<=480][ext=mp4]/bv*[height<=480]/bv*[height<=720]"
+)
+
+
+def video_file(out: Path) -> Path | None:
+    return next((p for p in out.glob("video.*") if ".tmp" not in p.name and ".part" not in p.name), None)
+
+
+def fetch_video(vid: str, out: Path) -> Path | None:
+    """Download the music video's picture (no sound, ≤480p), so the app can show it without the
+    YouTube embed, which asks people to sign in when it doesn't recognise the browser. Never fatal:
+    returns None if YouTube won't give it."""
+    import yt_dlp
+
+    if (existing := video_file(out)):
+        return existing
+    opts = {
+        "format": VIDEO_FORMAT,
+        "outtmpl": str(out / "video.tmp.%(ext)s"),
+        "quiet": True, "no_warnings": True, "noplaylist": True,
+        "retries": 3, "socket_timeout": 20, "ffmpeg_location": FFMPEG,
+    }
+    if (runtimes := _js_runtimes()):
+        opts["js_runtimes"] = runtimes
+        opts["remote_components"] = {"ejs:github"}
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/watch?v={vid}", download=True)
+            tmp = Path(ydl.prepare_filename(info)) if info else None
+    except Exception:  # noqa: BLE001 - the karaoke works without the picture
+        return None
+    if not tmp or not tmp.exists():
+        return None
+    final = out / f"video{tmp.suffix}"
+    tmp.replace(final)
+    return final
+
+
 def download(vid: str, out: Path, report: Report) -> dict:
     import yt_dlp
 
@@ -127,6 +166,8 @@ def download(vid: str, out: Path, report: Report) -> dict:
     tmp.replace(out / "mix.wav")
     # Keep the downloaded file so other models separate from it, not from a re-encode.
     src.replace(out / f"original{src.suffix}")
+    report("download", None)
+    fetch_video(vid, out)  # the picture for the player; failure just means the YouTube embed is used
     return {
         "title": info.get("title") or "",
         "track": info.get("track"),
@@ -465,6 +506,8 @@ def load_result(vid: str) -> dict | None:
         return None
     result = json.loads(path.read_text(encoding="utf-8"))
     result["stems"] = available_stems(DATA / vid)
+    video = video_file(DATA / vid)
+    result["video"] = video.name if video else None
     return result
 
 

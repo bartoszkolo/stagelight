@@ -239,6 +239,10 @@ body:has(#player:fullscreen) #queue, body:has(#player.fake-fs) #queue { display:
 /* YouTube wouldn't play the video: its cover photo, gently dimmed and slowly zooming, so the stage stays alive */
 #video.fallback { background: center / cover no-repeat; filter: blur(1.5px) brightness(.55) saturate(1.1); animation: kenburns 28s ease-in-out infinite alternate; }
 #video.fallback iframe { display: none; } /* hide YouTube's own "sign in" / error screen */
+/* downloaded picture: a plain <video> in sync with the instrumental, no YouTube embed */
+#localVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; pointer-events: none; }
+#video.local #localVideo { display: block; }
+#video.local iframe { display: none; }
 @keyframes kenburns { from { transform: scale(1.04) translate(0, 0); } to { transform: scale(1.16) translate(-2%, -1.5%); } }
 #toast .btn { margin: 10px auto 0; display: block; }
 /* demo backdrop: slow drifting stage lights instead of a music video */
@@ -440,10 +444,11 @@ kbd { font: 600 11px/1 Outfit, sans-serif; padding: 4px 7px; border-radius: 6px;
 .arcade-btn.on { color: #fff; background: var(--grad); border-color: transparent; box-shadow: 0 6px 20px -6px rgba(255,79,163,.7); }
 /* top strip: note lane + score panel, one unit */
 #arcadeTop {
-  position: absolute; left: 3%; right: 3%; top: 4%; height: 27%; pointer-events: none;
+  /* hugs the top edge and stays short, so it never reaches the lyrics on small screens */
+  position: absolute; left: 2%; right: 2%; top: 2%; height: clamp(64px, 18%, 150px); pointer-events: none;
   display: grid; grid-template-columns: 1fr clamp(120px, 15%, 190px); grid-template-rows: minmax(0, 1fr); gap: 10px;
 }
-#stage.center #arcadeTop { height: 22%; }
+#stage.center #arcadeTop { height: clamp(56px, 15%, 130px); }
 /* the canvas sits absolutely inside its cell, so its pixel size can't feed back into the layout */
 .lane-wrap { position: relative; min-width: 0; min-height: 0; }
 #lane { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -474,7 +479,9 @@ kbd { font: 600 11px/1 Outfit, sans-serif; padding: 4px 7px; border-radius: 6px;
 #rating.r-great b { color: #8dff6a; }
 #rating.r-good b { color: #38e1ff; }
 #rating.r-miss b { color: rgba(255,255,255,.55); font-size: clamp(18px, 2.6vw, 34px); }
-@media (max-width: 760px) { #arcadeTop { grid-template-columns: 1fr 96px; height: 30%; } .mic-meter span { display: none; } }
+@media (max-width: 760px) { #arcadeTop { grid-template-columns: 1fr 88px; height: clamp(56px, 16%, 110px); } .mic-meter span, .hud-label { display: none; } #arcadeHud { padding: 6px 10px; } }
+/* compact score panel when the strip is short */
+@media (max-height: 700px) { .hud-label { display: none; } #arcadeHud { padding: 6px 12px; } .mic-meter { margin-top: 2px; } }
 #results { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(7, 6, 13, .78); backdrop-filter: blur(10px); }
 .results-card { text-align: center; padding: 30px 40px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); min-width: min(420px, 90%); }
 .results-card h2 { margin: 6px 0 4px; font-size: 22px; }

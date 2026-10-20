@@ -53,9 +53,11 @@ The apps aren't code-signed (that costs money), so your system asks before the f
 **Windows:** *More info* → *Run anyway*. **macOS:** open Stagelight once, then *System Settings* →
 *Privacy & Security* → *Open Anyway*. **Linux:** `chmod +x Stagelight-*.AppImage`.
 
-No YouTube account needed: if YouTube won't play a music video in the app (for example it asks to
-sign in), Stagelight switches to its stage-light backdrop and the karaoke works the same. You can
-also turn the video off in Settings.
+No YouTube account needed: Stagelight downloads the music video's picture (no sound, up to 480p,
+roughly 10–15 MB per song) along with the audio and plays it in sync, so there's no YouTube player
+asking you to sign in. Songs from older versions get their picture in the background the first time
+you open them. If a picture isn't available, the song's cover is the backdrop. You can also turn the
+video off in Settings.
 
 ## Run from source
 
@@ -111,6 +113,9 @@ Everything is cached, so a song you've done once opens instantly next time.
   song is already in your library.
 - **A processing queue.** Add a whole evening's songs: they're processed one after another in the
   background, each with live progress and time left, and ready ones get a **Sing** button.
+- **Arcade mode.** Sing into your microphone and score points against the original singer's
+  melody: a note lane, Perfect / Great / Good ratings per line, combos, and an S–D rank at the end.
+  Pitch is compared regardless of octave, so anyone can sing any song. Press `A` or click 🎮 Arcade.
 - **Word-by-word highlighting** in four styles: *Wipe*, *Pop*, *Glow* and *Line*.
 - **A bouncing ball** that lands on each word as you should sing it, plus countdown dots before
   each verse and "Lyrics in 0:24" during long intros.

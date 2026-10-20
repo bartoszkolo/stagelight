@@ -37,7 +37,7 @@ function set(key, value) {
   applySettings();
   if (key === "video" && song) {
     setupVideo(song.id);
-    if (value && videoOk() && !audio.paused) { seekVideo(); yt.playVideo(); }
+    if (value && !audio.paused) videoPlay();
   }
 }
 
@@ -536,15 +536,60 @@ function withWords(line) {
   return { ...line, words };
 }
 
+// Where the music video comes from: "local" (picture downloaded with the song, played in sync
+// like the vocal), "yt" (YouTube embed, which can ask for sign-in), or "none" (stage lights / cover).
+let videoMode = "none", videoPoll = null;
+const localVideo = () => {
+  let v = $("localVideo");
+  if (!v) {
+    v = document.createElement("video");
+    v.id = "localVideo";
+    v.muted = true; v.playsInline = true; v.preload = "auto";
+    v.addEventListener("error", () => { // a codec this browser can't play: back to the embed
+      if (videoMode === "local" && song) { song.video = null; setupVideo(song.id); }
+    });
+    $("video").append(v);
+  }
+  return v;
+};
+
 function setupVideo(id) {
   const box = $("video");
-  box.classList.remove("fallback");
+  box.classList.remove("fallback", "local");
+  clearInterval(videoPoll);
   // Demo, built-in songs, or video switched off: animated stage lights instead of YouTube.
   const noVideo = id === "demo" || song?.bundled || !settings.video;
   videoStuckSince = 0;
   box.classList.toggle("demo-bg", !!noVideo);
   box.style.backgroundImage = "";
-  if (noVideo) { ytOk = false; yt?.stopVideo?.(); return; }
+  $("localVideo")?.removeAttribute("src");
+  $("localVideo")?.load();
+  if (noVideo) { videoMode = "none"; ytOk = false; yt?.stopVideo?.(); return; }
+
+  if (song?.video) { // downloaded picture: no YouTube player at all
+    videoMode = "local";
+    ytOk = false; yt?.stopVideo?.();
+    box.classList.add("local");
+    const v = localVideo();
+    v.src = `/media/${id}/${song.video}`;
+    v.currentTime = audio.currentTime;
+    if (!audio.paused) v.play().catch(() => {});
+    return;
+  }
+  // Older songs: fetch the picture in the background and switch over as soon as it's there.
+  if (!STATIC && song) {
+    fetch(`/api/songs/${id}/video`, { method: "POST" }).catch(() => {});
+    let tries = 0;
+    videoPoll = setInterval(async () => {
+      if (++tries > 60 || song?.id !== id) return clearInterval(videoPoll);
+      try {
+        const r = await (await fetch(`/api/songs/${id}/video`)).json();
+        if (r.video && song?.id === id) { clearInterval(videoPoll); song.video = r.video; setupVideo(id); }
+        else if (!r.fetching && tries > 2) clearInterval(videoPoll);
+      } catch {}
+    }, 3000);
+  }
+  videoMode = "yt";
   ytOk = true;
   pendingVideo = id;
   const create = () => {
@@ -568,7 +613,22 @@ function setupVideo(id) {
   if (window.YT?.Player) create(); else window.onYouTubeIframeAPIReady = create;
 }
 
-const videoOk = () => yt && ytReady && ytOk;
+const videoOk = () => videoMode === "yt" && yt && ytReady && ytOk;
+
+// One place to start, pause and seek whichever video is showing.
+function videoPlay() {
+  if (videoMode === "local") { const v = localVideo(); v.currentTime = audio.currentTime; v.play().catch(() => {}); }
+  else if (videoOk()) { seekVideo(); yt.playVideo(); }
+}
+function videoPause() {
+  if (videoMode === "local") localVideo().pause();
+  else if (videoOk()) yt.pauseVideo();
+}
+function videoSeek() {
+  if (videoMode === "local") localVideo().currentTime = audio.currentTime;
+  else if (videoOk()) seekVideo();
+}
+
 const togglePlay = () => (audio.paused ? safePlay() : audio.pause());
 const setPlayIcon = (playing) => $("play").querySelector("use").setAttribute("href", playing ? "#i-pause" : "#i-play");
 
@@ -577,7 +637,7 @@ audio.addEventListener("play", () => {
   setPlayIcon(true);
   player.classList.remove("paused");
   syncVocals(true);
-  if (videoOk()) { seekVideo(); yt.playVideo(); }
+  videoPlay();
   armIdle();
 });
 audio.addEventListener("pause", () => {
@@ -585,14 +645,26 @@ audio.addEventListener("pause", () => {
   player.classList.add("paused");
   player.classList.remove("idle");
   vocals.pause();
-  if (videoOk()) yt.pauseVideo();
+  videoPause();
 });
 audio.addEventListener("loadedmetadata", () => { $("dur").textContent = fmt(audio.duration); });
-audio.addEventListener("seeked", () => { syncVocals(true); if (videoOk()) seekVideo(); });
+audio.addEventListener("seeked", () => { syncVocals(true); videoSeek(); });
 audio.addEventListener("ended", () => { audio.pause(); window.arcade?.ended(); });
 // If the instrumental stalls to buffer, hold the vocal and the video with it.
-audio.addEventListener("waiting", () => { vocals.pause(); if (videoOk()) yt.pauseVideo(); });
-audio.addEventListener("playing", () => { syncVocals(true); if (videoOk()) { seekVideo(); yt.playVideo(); } });
+audio.addEventListener("waiting", () => { vocals.pause(); videoPause(); });
+audio.addEventListener("playing", () => { syncVocals(true); videoPlay(); });
+
+// The downloaded picture follows the instrumental like the vocal does (small drift: nudge the rate).
+setInterval(() => {
+  if (videoMode !== "local" || audio.paused) return;
+  const v = localVideo();
+  if (v.seeking || v.readyState < 2) return;
+  const drift = v.currentTime - audio.currentTime;
+  if (v.ended || audio.currentTime > v.duration) return; // video shorter than the song: hold the last frame
+  if (Math.abs(drift) > 0.25) { v.playbackRate = 1; v.currentTime = audio.currentTime; }
+  else v.playbackRate = Math.abs(drift) > 0.04 ? 1 - Math.sign(drift) * 0.04 : 1;
+  if (v.paused) v.play().catch(() => {});
+}, 250);
 player.classList.add("paused");
 
 // Single click plays/pauses, double click toggles fullscreen.
