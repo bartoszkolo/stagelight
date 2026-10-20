@@ -29,7 +29,21 @@ with the music video in the background. **No account, no upload, no subscription
   </tr>
 </table>
 
-## Quick start
+## Download
+
+| Windows | macOS | Linux |
+|---|---|---|
+| [**Stagelight-win-x64.exe**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-win-x64.exe) | [**Apple Silicon**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-mac-arm64.dmg) · [Intel](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-mac-x64.dmg) | [**AppImage**](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-linux-x86_64.AppImage) · [.deb](https://github.com/bartoszkolo/stagelight/releases/latest/download/Stagelight-linux-amd64.deb) |
+
+The installer is about 150 MB. On first launch Stagelight downloads its AI engine (about 700 MB,
+once) into your user folder, which takes a few minutes. Then it opens with a built-in song you can
+sing straight away.
+
+The apps aren't code-signed (that costs money), so your system asks before the first launch:
+**Windows:** *More info* → *Run anyway*. **macOS:** right-click the app → *Open*; if it says the
+app is damaged, run `xattr -cr /Applications/Stagelight.app`. **Linux:** `chmod +x Stagelight-*.AppImage`.
+
+## Run from source
 
 You need **Python 3.10–3.12** and **[Node.js](https://nodejs.org) or [Deno](https://deno.com)**
 (YouTube downloads need a JavaScript runtime). [uv](https://docs.astral.sh/uv/) makes the install
