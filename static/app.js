@@ -1026,6 +1026,7 @@ if (STATIC) {
   cta.className = "static-cta";
   cta.href = "../#download";
   cta.innerHTML = "Like it? <b>Get Stagelight</b> and sing any song →";
-  document.body.append(cta);
+  // Below the player, in the page flow: a floating banner would cover the controls on short screens.
+  $("playerView").append(cta);
 }
 $("demoLink")?.addEventListener("click", (e) => { e.preventDefault(); history.pushState(null, "", "?demo"); openDemo(); });
