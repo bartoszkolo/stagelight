@@ -153,6 +153,23 @@ def get_job(vid: str, model: str):
     return {"queuePos": ahead, "now": time.time(), **snapshot}
 
 
+_melody_locks: dict[str, threading.Lock] = {}
+
+
+@app.get("/api/songs/{vid}/melody")
+def song_melody(vid: str):
+    """The original singer's melody, for arcade-mode scoring. Computed once (~15-40 s), then cached."""
+    if not pipeline.video_id(vid):
+        raise HTTPException(404)
+    with lock:
+        song_lock = _melody_locks.setdefault(vid, threading.Lock())
+    with song_lock:  # two tabs asking at once compute it only once
+        data = pipeline.melody_for(vid)
+    if data is None:
+        raise HTTPException(404, "This song hasn't been processed yet")
+    return data
+
+
 class OffsetIn(BaseModel):
     offset: float
 

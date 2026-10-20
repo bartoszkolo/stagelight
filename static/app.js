@@ -10,6 +10,7 @@ const thumb = (id) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 const DEFAULTS = {
   size: 100, font: "modern", anim: "wipe", color: "#ffd447", lines: "3", position: "bottom",
   ball: true, countdown: true, dim: 15, blur: false, music: 100, vocal: 0, model: "karaoke", video: true,
+  difficulty: "normal", micDelay: 120,
 };
 const FONTS = {
   modern: "Outfit, system-ui, sans-serif",
@@ -67,6 +68,7 @@ function applySettings() {
   });
   setRange("setSize", settings.size, `${settings.size}%`, "sizeVal");
   setRange("setDim", settings.dim, `${settings.dim}%`, "dimVal");
+  setRange("setMicDelay", settings.micDelay, `${settings.micDelay} ms`, "micDelayVal");
   if ($("modelSelect").options.length) $("modelSelect").value = settings.model;
   renderModels();
   requestAnimationFrame(measureLine); // size/font/layout changes move the words under the ball
@@ -95,6 +97,7 @@ document.querySelectorAll("input[type=checkbox][data-setting]").forEach((el) => 
 $("setSize").addEventListener("input", (e) => set("size", Number(e.target.value)));
 $("setDim").addEventListener("input", (e) => set("dim", Number(e.target.value)));
 $("setMusic").addEventListener("input", (e) => set("music", Number(e.target.value)));
+$("setMicDelay").addEventListener("input", (e) => set("micDelay", Number(e.target.value)));
 $("vocVol").addEventListener("input", (e) => { set("vocal", Number(e.target.value)); syncVocals(true); });
 
 // Seek bar: while dragging only preview the time; seek once on release (each seek also moves the video).
@@ -473,6 +476,7 @@ function load(result, model) {
   if (!lines.length) $("lCur").textContent = "No lyrics found. Enjoy the instrumental 🎶";
   if (!sameSong) setupVideo(result.id);
   switchStems(model, !sameSong);
+  if (!sameSong) window.arcade?.songChanged();
 }
 
 function updateSub() {
@@ -585,7 +589,7 @@ audio.addEventListener("pause", () => {
 });
 audio.addEventListener("loadedmetadata", () => { $("dur").textContent = fmt(audio.duration); });
 audio.addEventListener("seeked", () => { syncVocals(true); if (videoOk()) seekVideo(); });
-audio.addEventListener("ended", () => audio.pause());
+audio.addEventListener("ended", () => { audio.pause(); window.arcade?.ended(); });
 // If the instrumental stalls to buffer, hold the vocal and the video with it.
 audio.addEventListener("waiting", () => { vocals.pause(); if (videoOk()) yt.pauseVideo(); });
 audio.addEventListener("playing", () => { syncVocals(true); if (videoOk()) { seekVideo(); yt.playVideo(); } });
@@ -703,6 +707,7 @@ document.addEventListener("keydown", (e) => {
     case "Space": e.preventDefault(); togglePlay(); break;
     case "KeyF": toggleFullscreen(); break;
     case "KeyS": openSettings(); break;
+    case "KeyA": window.arcade?.toggle(); break;
     case "BracketLeft": updateOffset(-0.2); break;
     case "BracketRight": updateOffset(+0.2); break;
     case "ArrowLeft": if (!onRange && isFinite(audio.duration)) audio.currentTime = Math.max(0, audio.currentTime - 5); break;

@@ -28,7 +28,12 @@
     ],
     "win": { "target": ["nsis"], "icon": "build/icon.ico" },
     "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true },
-    "mac": { "target": ["dmg"], "category": "public.app-category.music", "icon": "build/icon.png", "identity": null },
+    "mac": {
+      "target": ["dmg"], "category": "public.app-category.music", "icon": "build/icon.png", "identity": null,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Stagelight listens to your singing in Arcade mode to score how well you hit the notes. Nothing is recorded or sent anywhere."
+      }
+    },
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "AudioVideo",

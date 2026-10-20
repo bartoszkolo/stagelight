@@ -373,6 +373,75 @@ def best_offset(lines: list[dict], env: np.ndarray, hz: int = 10) -> float:
     return round(best, 2)
 
 
+# ---------------------------------------------------------------- melody (arcade mode)
+
+MELODY_HOP = 0.02  # seconds per frame
+
+
+def melody(vocals: Path) -> dict:
+    """The sung melody of the separated vocal, for scoring a singer in arcade mode.
+
+    YIN pitch every 20 ms, kept only where the vocal is clearly audible, median-smoothed, as MIDI
+    note numbers. Also grouped into steady "notes" (≥ 0.12 s on one semitone) for the note lane.
+    About 4-5x faster than real time on a laptop CPU."""
+    import librosa
+    from scipy.signal import medfilt
+
+    sr = 16000
+    hop = int(sr * MELODY_HOP)
+    pcm = subprocess.run([FFMPEG, "-loglevel", "error", "-i", str(vocals), "-ac", "1", "-ar", str(sr),
+                          "-f", "f32le", "pipe:1"], check=True, capture_output=True).stdout
+    y = np.frombuffer(pcm, dtype="<f4").copy()
+    f0 = librosa.yin(y, fmin=70, fmax=1000, sr=sr, frame_length=1024, hop_length=hop)
+    rms = librosa.feature.rms(y=y, frame_length=1024, hop_length=hop)[0][: len(f0)]
+    loud = rms > 0.12 * (np.percentile(rms, 95) or 1.0)  # bleed and breaths stay below this
+
+    midi = np.where(loud, 69 + 12 * np.log2(np.maximum(f0, 1e-6) / 440), np.nan)
+    filled = np.where(np.isnan(midi), 0, midi)
+    smooth = np.where(np.isnan(midi), np.nan, medfilt(filled, 5))
+    # Drop voiced blips shorter than 60 ms: consonants, clicks.
+    voiced = ~np.isnan(smooth)
+    start = None
+    for i, v in enumerate(np.append(voiced, False)):
+        if v and start is None:
+            start = i
+        elif not v and start is not None:
+            if i - start < 3:
+                smooth[start:i] = np.nan
+            start = None
+
+    notes, i, n = [], 0, len(smooth)
+    while i < n:
+        if np.isnan(smooth[i]):
+            i += 1
+            continue
+        pitch = round(float(smooth[i]))
+        j = i
+        while j + 1 < n and not np.isnan(smooth[j + 1]) and abs(smooth[j + 1] - pitch) <= 0.75:
+            j += 1
+        if (j - i + 1) * MELODY_HOP >= 0.12:
+            notes.append([round(i * MELODY_HOP, 2), round((j + 1) * MELODY_HOP, 2), pitch])
+        i = j + 1
+
+    frames = [None if np.isnan(m) else round(float(m), 1) for m in smooth]
+    return {"hop": MELODY_HOP, "frames": frames, "notes": notes}
+
+
+def melody_for(vid: str) -> dict | None:
+    """Cached melody of a processed song (from whichever model's vocal stem exists)."""
+    out = DATA / vid
+    cache = out / "melody.json"
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
+    vocals = next((p for p in (out / "stems").glob("*/vocals.wav")), None) or \
+        next((p for p in (out / "stems").glob("*/vocals.mp3")), None)
+    if not vocals:
+        return None
+    data = melody(vocals)
+    write_json(cache, data)
+    return data
+
+
 # ---------------------------------------------------------------- orchestration
 
 def migrate_legacy() -> None:

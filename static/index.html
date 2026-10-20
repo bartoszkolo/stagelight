@@ -103,6 +103,27 @@
       </div>
       <div id="countdown"></div>
       <div id="bigPlay"><svg><use href="#i-play"/></svg></div>
+      <!-- arcade mode: note lane, score and per-line rating -->
+      <canvas id="lane" hidden></canvas>
+      <div id="arcadeHud" hidden><div id="score">0</div><div id="combo"></div></div>
+      <div id="rating" aria-live="polite"></div>
+    </div>
+    <div id="results" hidden>
+      <div class="results-card">
+        <div class="eyebrow">Arcade</div>
+        <h2 id="resSong"></h2>
+        <div id="resStars" class="stars" aria-label="Stars"></div>
+        <div class="res-score"><b id="resScore">0</b><span id="resBest"></span></div>
+        <dl class="res-stats">
+          <dt>On pitch</dt><dd id="resAcc">0%</dd>
+          <dt>Best combo</dt><dd id="resCombo">0</dd>
+          <dt>Perfect lines</dt><dd id="resPerfect">0</dd>
+        </dl>
+        <div class="cta-row">
+          <button id="resAgain" class="btn primary">Sing it again</button>
+          <button id="resClose" class="btn ghost">Close</button>
+        </div>
+      </div>
     </div>
 
     <div id="controls">
@@ -119,6 +140,7 @@
         <span class="ctl-label">Sync</span>
         <button id="offMinus" class="mini" aria-label="Show lyrics earlier">−</button><b id="offVal" class="ctl-val" aria-live="polite">0.0s</b><button id="offPlus" class="mini" aria-label="Show lyrics later">+</button>
       </div>
+      <button id="arcadeBtn" class="arcade-btn" title="Arcade: sing into the microphone and score points (A)" aria-pressed="false">🎮 Arcade</button>
       <button id="openSettings" class="icon-btn" title="Settings (S)"><svg><use href="#i-gear"/></svg></button>
       <button id="fs" class="icon-btn" title="Fullscreen (F)"><svg><use href="#i-expand"/></svg></button>
     </div>
@@ -196,6 +218,14 @@
           <h4>Audio</h4>
           <label class="row">Music volume <output id="musicVal">100%</output></label>
           <input id="setMusic" class="range" type="range" min="0" max="100" step="1" value="100">
+          <div class="row">Arcade difficulty</div>
+          <div class="seg" data-setting="difficulty">
+            <button data-value="easy" title="Within 2 semitones counts">Easy</button>
+            <button data-value="normal" title="Within about a semitone">Normal</button>
+            <button data-value="hard" title="Within half a semitone">Hard</button>
+          </div>
+          <label class="row" title="Microphones and speakers add a little delay; raise this if you're always scored late">Mic delay (arcade) <output id="micDelayVal">120 ms</output></label>
+          <input id="setMicDelay" class="range" type="range" min="0" max="400" step="10" value="120">
         </section>
 
         <section class="set-sep">
@@ -233,5 +263,6 @@
 <audio id="vocals" preload="auto"></audio>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="app.js"></script>
+<script src="arcade.js"></script>
 </body>
 </html>
