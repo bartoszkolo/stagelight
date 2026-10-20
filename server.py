@@ -28,6 +28,9 @@ def worker():
         job["stage"], job["stageStarted"] = "starting", time.time()
 
         def report(stage, progress, **info):
+            # Progress reports arrive every second or two in every stage: the place to honour "Cancel".
+            if job.get("cancel"):
+                raise pipeline.Cancelled()
             if stage != job.get("stage"):
                 job["stageStarted"] = time.time()
             job.update(info, stage=stage, progress=progress)
@@ -37,6 +40,10 @@ def worker():
             job["title"] = job["result"]["title"]
             job["stage"], job["finished"] = "done", time.time()
         except BaseException as e:  # never let the worker die: queued jobs would wait forever
+            if job.get("cancel"):  # yt-dlp may wrap our exception in its own: the flag is what counts
+                pipeline.clean_up_cancelled(key.split(":")[0])
+                job["stage"], job["error"] = "cancelled", "Cancelled"
+                continue
             traceback.print_exc()
             job["stage"], job["error"] = "error", str(e) or e.__class__.__name__
 
@@ -116,14 +123,14 @@ def list_jobs():
             if j["stage"] == "done" and j.get("seq") is None:
                 continue  # opened from the library, never queued
             out.append({k: j.get(k) for k in ("id", "model", "title", "stage", "progress", "stageStarted",
-                                               "seq", "error", "finished")})
+                                               "seq", "error", "finished", "cancel")})
     out.sort(key=lambda j: (j["stage"] == "done", j["stage"] == "error", j.get("seq") or 0))
     return {"now": now, "jobs": out}
 
 
 @app.delete("/api/jobs/{vid}/{model}")
 def dismiss_job(vid: str, model: str):
-    """Remove a queued (not yet started) job, or clear a finished/failed one from the list."""
+    """Cancel a job (queued: right away; processing: within a few seconds), or clear a finished one."""
     with lock:
         job = jobs.get(f"{vid}:{model}")
         if not job:
@@ -133,7 +140,8 @@ def dismiss_job(vid: str, model: str):
         elif job["stage"] in ("done", "error", "cancelled"):
             jobs.pop(f"{vid}:{model}")
         else:
-            raise HTTPException(409, "Already processing; it can't be stopped halfway")
+            job["cancel"] = True  # the worker stops at its next progress report
+            return {"ok": True, "cancelling": True}
     return {"ok": True}
 
 

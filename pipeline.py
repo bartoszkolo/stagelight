@@ -38,6 +38,21 @@ SR = 44100
 
 Report = Callable[..., None]  # (stage, progress 0..1 or None, **extra info such as title)
 
+
+class Cancelled(Exception):
+    """Raised from a progress report when the person cancels the job."""
+
+
+def clean_up_cancelled(vid: str) -> None:
+    """After a cancel: drop half-written files; drop the whole folder if the song was brand new."""
+    out = DATA / vid
+    if not out.is_dir():
+        return
+    for p in list(out.glob("*.part")) + list(out.glob("*.tmp.*")) + list(out.glob("source.*")) + list(out.glob("sep-*")):
+        shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
+    if not (out / "result.json").exists() and not available_stems(out):
+        shutil.rmtree(out, ignore_errors=True)
+
 _ID_RE = re.compile(r"(?:v=|youtu\.be/|shorts/|embed/|live/)([A-Za-z0-9_-]{11})")
 
 

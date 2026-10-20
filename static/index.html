@@ -65,6 +65,7 @@
 <!-- ============================================================ processing -->
 <section id="processing" class="view" hidden>
   <div class="proc-card">
+    <button id="procClose" class="proc-close" title="Close (Esc). Processing keeps going; the song appears in your library when it's ready" aria-label="Close">✕</button>
     <img id="procThumb" alt="">
     <div class="proc-body">
       <div class="eyebrow">Preparing your track</div>
@@ -76,7 +77,7 @@
         <li data-step="align"><i></i><span>Sync to video</span><small></small></li>
       </ol>
       <div class="bar"><div id="barFill"></div></div>
-      <div class="proc-foot"><span id="procNote"></span><button id="procCancel" class="btn ghost small" title="Processing continues; the song appears in your library when it's ready">Keep going in background</button></div>
+      <div class="proc-foot"><span id="procNote"></span><span class="proc-actions"><button id="procCancel" class="btn ghost small" title="Processing continues; the song appears in your library when it's ready">Keep going in background</button><button id="procStop" class="btn ghost small danger" title="Stop processing this song">Cancel</button></span></div>
       <div id="procError" class="error" hidden></div>
     </div>
   </div>

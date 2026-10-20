@@ -224,6 +224,14 @@ body:has(#player:fullscreen) #queue, body:has(#player.fake-fs) #queue { display:
 #barFill { height: 100%; width: 0; background: var(--grad); border-radius: 3px; transition: width .4s; }
 #barFill.indeterminate { width: 30% !important; animation: slide 1.3s infinite ease-in-out; }
 @keyframes slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+.proc-card { position: relative; }
+.proc-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 10px; border: 0;
+  background: transparent; color: var(--muted); font-size: 15px; cursor: pointer; }
+.proc-close:hover { background: rgba(255,255,255,.08); color: var(--text); }
+.proc-body { padding-right: 24px; }
+.proc-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn.danger:hover { color: #ff8a8a; border-color: rgba(255,120,120,.5); }
+.proc-foot { flex-wrap: wrap; }
 .proc-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; color: var(--muted); font-size: 13px; gap: 12px; }
 
 /* ------------------------------------------------------------ player */

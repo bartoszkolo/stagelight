@@ -243,6 +243,7 @@ $("url").addEventListener("input", () => {
 
 let pollToken = 0;
 let lastRequest = null; // for "Try again"
+let procJob = null;     // the song on the processing screen, for "Cancel"
 async function start(url, model, { push = true, title = null } = {}) {
   const token = ++pollToken;
   lastRequest = { url, model };
@@ -303,7 +304,9 @@ async function poll(id, model, token) {
     }
     if (token !== pollToken) return;
     if (job.stage === "done") { document.title = "Stagelight Karaoke"; return load(job.result, model); }
-    if (job.stage === "error" || job.stage === "cancelled") throw new Error(job.error);
+    if (job.stage === "cancelled") { goHome(); return toast("Processing cancelled."); }
+    if (job.stage === "error") throw new Error(job.error);
+    procJob = { id, model };
     if (first) {
       first = false;
       show("processing");
@@ -337,7 +340,9 @@ function renderProgress(job, model) {
   fill.style.width = `${(p || 0) * 100}%`;
 
   let note = "";
-  if (job.stage === "queued") note = job.queuePos ? `Waiting for ${job.queuePos} other song${job.queuePos > 1 ? "s" : ""}…` : "Starting…";
+  $("procStop").disabled = !!job.cancel;
+  if (job.cancel) note = "Cancelling…";
+  else if (job.stage === "queued") note = job.queuePos ? `Waiting for ${job.queuePos} other song${job.queuePos > 1 ? "s" : ""}…` : "Starting…";
   else if (step === "separate") {
     note = `${modelName(model)} model`;
     if (job.stage === "encode") note = "Saving the instrumental…";
@@ -355,7 +360,17 @@ function renderProgress(job, model) {
 const fmtLeft = (s) => (s < 60 ? `${Math.max(5, Math.round(s / 5) * 5)} s` : `${Math.round(s / 60)} min`);
 
 // The job keeps running on the server; it shows up in the library when it's ready.
-$("procCancel").onclick = () => { pollToken++; goHome(); };
+$("procCancel").onclick = $("procClose").onclick = () => { pollToken++; goHome(); };
+// Picked the wrong song: stop it on the server (it stops within a second or two) and go back.
+$("procStop").onclick = async () => {
+  const job = procJob;
+  pollToken++;
+  goHome();
+  if (!job) return;
+  await fetch(`/api/jobs/${job.id}/${job.model}`, { method: "DELETE" }).catch(() => {});
+  toast("Processing cancelled.");
+  refreshQueue();
+};
 $("back").onclick = () => goHome();
 function goHome({ push = true } = {}) {
   if (push && location.search) history.pushState(null, "", "/");
@@ -538,7 +553,7 @@ function withWords(line) {
 
 // Where the music video comes from: "local" (picture downloaded with the song, played in sync
 // like the vocal), "yt" (YouTube embed, which can ask for sign-in), or "none" (stage lights / cover).
-let videoMode = "none", videoPoll = null;
+let videoMode = "none", videoPoll = null, videoFetching = false;
 const localVideo = () => {
   let v = $("localVideo");
   if (!v) {
@@ -557,6 +572,7 @@ function setupVideo(id) {
   const box = $("video");
   box.classList.remove("fallback", "local");
   clearInterval(videoPoll);
+  videoFetching = false;
   // Demo, built-in songs, or video switched off: animated stage lights instead of YouTube.
   const noVideo = id === "demo" || song?.bundled || !settings.video;
   videoStuckSince = 0;
@@ -570,6 +586,7 @@ function setupVideo(id) {
     videoMode = "local";
     ytOk = false; yt?.stopVideo?.();
     box.classList.add("local");
+    $("toast")?.classList.remove("show"); // a YouTube complaint from before the download is moot now
     const v = localVideo();
     v.src = `/media/${id}/${song.video}`;
     v.currentTime = audio.currentTime;
@@ -580,12 +597,14 @@ function setupVideo(id) {
   if (!STATIC && song) {
     fetch(`/api/songs/${id}/video`, { method: "POST" }).catch(() => {});
     let tries = 0;
+    videoFetching = true;
+    const stop = () => { clearInterval(videoPoll); videoFetching = false; };
     videoPoll = setInterval(async () => {
-      if (++tries > 60 || song?.id !== id) return clearInterval(videoPoll);
+      if (++tries > 60 || song?.id !== id) return stop();
       try {
         const r = await (await fetch(`/api/songs/${id}/video`)).json();
-        if (r.video && song?.id === id) { clearInterval(videoPoll); song.video = r.video; setupVideo(id); }
-        else if (!r.fetching && tries > 2) clearInterval(videoPoll);
+        if (r.video && song?.id === id) { stop(); song.video = r.video; setupVideo(id); }
+        else if (!r.fetching && tries > 2) stop();
       } catch {}
     }, 3000);
   }
@@ -712,7 +731,8 @@ async function videoFallback(message) {
     box.classList.add("fallback");
     box.style.backgroundImage = `url(${await bestThumb(song.id)})`;
   } else box.classList.add("demo-bg");
-  if (!message) return;
+  // While the picture is downloading, the cover stands in quietly: the real video arrives shortly.
+  if (!message || videoFetching) return;
   // In the desktop app, offer the person's own browser: they're signed in to YouTube there.
   const desktop = window.stagelightDesktop;
   toast(message, desktop && {
@@ -766,7 +786,8 @@ setInterval(() => {
 document.addEventListener("keydown", (e) => {
   if (e.target.matches("input[type=text], input:not([type]), select") || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === "Escape") {
-    if (settingsOpen()) openSettings(false);
+    if (!$("processing").hidden) $("procClose").click();
+    else if (settingsOpen()) openSettings(false);
     else exitFullscreen();
     return;
   }
@@ -1074,6 +1095,7 @@ async function refreshQueue() {
 
 function jobStatus(j) {
   const p = j.progress || 0;
+  if (j.cancel) return { text: "Cancelling…", progress: p };
   switch (j.stage) {
     case "queued": {
       const ahead = queueJobs.filter((o) => !["done", "error", "cancelled"].includes(o.stage)
@@ -1118,12 +1140,12 @@ function renderQueue(busy) {
     if (j.stage === "done") act.append(button("▶ Sing", "btn primary", () => start(j.id, j.model)));
     else if (j.stage === "error") act.append(button("Retry", "btn ghost", () => start(j.id, j.model, { title: j.title })));
     else if (j.stage !== "queued") act.append(button("View", "btn ghost", () => start(j.id, j.model)));
-    if (["queued", "done", "error"].includes(j.stage)) {
+    if (!j.cancel) {
       const x = button("✕", "x", async () => {
         await fetch(`/api/jobs/${j.id}/${j.model}`, { method: "DELETE" });
         refreshQueue();
       });
-      x.title = j.stage === "queued" ? "Remove from queue" : "Clear";
+      x.title = j.stage === "queued" ? "Remove from queue" : ["done", "error"].includes(j.stage) ? "Clear" : "Cancel processing";
       act.append(x);
     }
     return li;
