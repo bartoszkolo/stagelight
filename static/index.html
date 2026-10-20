@@ -12,7 +12,6 @@
 </head>
 <body>
 <div id="ambient"></div>
-<div id="scrim"></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></symbol>
@@ -131,7 +130,13 @@
         <button id="closeSettings" class="icon-btn" title="Close (Esc)"><svg><use href="#i-close"/></svg></button>
       </div>
       <div class="set-body">
-        <section>
+        <section class="set-preview" aria-label="Preview">
+          <div id="previewStage" class="preview-stage">
+            <div class="line cur" id="previewCur"></div>
+            <div class="line next">and every word lights up for you</div>
+          </div>
+        </section>
+        <section class="set-lyrics">
           <h4>Lyrics</h4>
           <label class="row">Text size <output id="sizeVal">100%</output></label>
           <input id="setSize" class="range" type="range" min="60" max="170" step="5" value="100">
@@ -179,26 +184,27 @@
           <label class="toggle"><span>Countdown before verses</span><input type="checkbox" data-setting="countdown"><i></i></label>
         </section>
 
-        <section>
+        <section class="set-video">
           <h4>Video</h4>
+          <label class="toggle"><span>Show the music video</span><input type="checkbox" data-setting="video"><i></i></label>
           <label class="row">Dim video <output id="dimVal">0%</output></label>
           <input id="setDim" class="range" type="range" min="0" max="85" step="5" value="15">
           <label class="toggle"><span>Blur video</span><input type="checkbox" data-setting="blur"><i></i></label>
         </section>
 
-        <section>
+        <section class="set-audio">
           <h4>Audio</h4>
           <label class="row">Music volume <output id="musicVal">100%</output></label>
           <input id="setMusic" class="range" type="range" min="0" max="100" step="1" value="100">
         </section>
 
-        <section>
+        <section class="set-sep">
           <h4>Vocal separation</h4>
           <p class="hint">Used for new songs. On this song you can switch to a model that's already processed, or process it again with another one.</p>
           <div id="modelList" class="models"></div>
         </section>
 
-        <section>
+        <section class="set-keys">
           <h4>Shortcuts</h4>
           <dl class="keys">
             <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>

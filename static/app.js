@@ -9,7 +9,7 @@ const thumb = (id) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 
 const DEFAULTS = {
   size: 100, font: "modern", anim: "wipe", color: "#ffd447", lines: "3", position: "bottom",
-  ball: true, countdown: true, dim: 15, blur: false, music: 100, vocal: 0, model: "karaoke",
+  ball: true, countdown: true, dim: 15, blur: false, music: 100, vocal: 0, model: "karaoke", video: true,
 };
 const FONTS = {
   modern: "Outfit, system-ui, sans-serif",
@@ -34,6 +34,10 @@ function set(key, value) {
   // Volumes change on every slider tick: keep that path cheap and don't touch the lyric DOM.
   if (key === "music" || key === "vocal") return applyAudio();
   applySettings();
+  if (key === "video" && song) {
+    setupVideo(song.id);
+    if (value && videoOk() && !audio.paused) { seekVideo(); yt.playVideo(); }
+  }
 }
 
 function applyAudio() {
@@ -66,6 +70,7 @@ function applySettings() {
   if ($("modelSelect").options.length) $("modelSelect").value = settings.model;
   renderModels();
   requestAnimationFrame(measureLine); // size/font/layout changes move the words under the ball
+  if ($("previewStage")) renderPreview();
 }
 
 function setRange(id, value, label, outId) {
@@ -107,31 +112,57 @@ $("resetSettings").onclick = () => { settings = { ...DEFAULTS, model: settings.m
 $("modelSelect").addEventListener("change", (e) => set("model", e.target.value));
 
 const player = $("player");
-// One drawer, two homes: inside the player (so it works in fullscreen), or floating over the home
-// screen. The element is moved, so its listeners come along.
+// The settings panel covers the whole window. It lives in <body>, except during real fullscreen,
+// where only the fullscreen element is visible, so it moves into the player (listeners come along).
 const settingsOpen = () => $("settings").classList.contains("open");
+function hostSettings() {
+  const drawer = $("settings");
+  const host = document.fullscreenElement === player ? player : document.body;
+  if (drawer.parentElement !== host) host.append(drawer);
+}
 const openSettings = (open = !settingsOpen()) => {
   const drawer = $("settings");
-  const inPlayer = !$("playerView").hidden;
-  if (open) {
-    if (inPlayer && drawer.parentElement !== player) player.append(drawer);
-    if (!inPlayer && drawer.parentElement !== document.body) document.body.append(drawer);
-    drawer.classList.toggle("floating", !inPlayer);
-  }
+  if (open) { hostSettings(); renderPreview(); }
   drawer.classList.toggle("open", open);
-  player.classList.toggle("settings-open", open && inPlayer);
-  document.body.classList.toggle("settings-floating", open && !inPlayer);
-  drawer.inert = !open; // keep Tab out of the drawer while it's closed
+  player.classList.toggle("settings-open", open);
+  drawer.inert = !open; // keep Tab out of the panel while it's closed
   if (open) { player.classList.remove("idle"); $("closeSettings").focus(); }
   else if (drawer.contains(document.activeElement) || document.activeElement === document.body) {
-    (inPlayer ? $("openSettings") : $("homeSettings")).focus();
+    ($("playerView").hidden ? $("homeSettings") : $("openSettings")).focus();
   }
 };
 $("settings").inert = true;
 $("openSettings").onclick = () => openSettings();
 $("homeSettings").onclick = () => openSettings(true);
-$("scrim").onclick = () => openSettings(false);
 $("closeSettings").onclick = () => openSettings(false);
+
+// Live preview at the top of the settings: a sample line in the chosen font, size, colour and
+// highlight style, frozen mid-line (two words sung, one being sung), with the ball above it.
+const PREVIEW_WORDS = ["Sing", "along", "with", "the", "stage", "lights"];
+function renderPreview() {
+  const stage = $("previewStage"), cur = $("previewCur");
+  stage.className = `preview-stage anim-${settings.anim} font-${settings.font} lines-${settings.lines}`;
+  cur.replaceChildren();
+  PREVIEW_WORDS.forEach((w, i) => {
+    const s = document.createElement("span");
+    s.className = "w" + (i < 2 ? " sung" : i === 2 ? " active" : "");
+    s.style.setProperty("--p", i < 2 ? 1 : i === 2 ? 0.55 : 0);
+    s.textContent = w;
+    cur.append(s, i < PREVIEW_WORDS.length - 1 ? " " : "");
+  });
+  let ball = $("previewBall");
+  if (!ball) { ball = document.createElement("i"); ball.id = "previewBall"; }
+  stage.append(ball);
+  ball.style.display = settings.ball ? "" : "none";
+  requestAnimationFrame(() => { // place it over the word being sung, once fonts have laid out
+    const w = cur.querySelectorAll(".w")[2];
+    if (!w) return;
+    const fs = parseFloat(getComputedStyle(cur).fontSize);
+    ball.style.fontSize = `${fs}px`; // the ball is sized in em, like the real one over the lyrics
+    const x = cur.offsetLeft + w.offsetLeft + w.offsetWidth / 2;
+    ball.style.transform = `translate(${x}px, ${cur.offsetTop + w.offsetTop - fs * 0.62}px)`;
+  });
+}
 
 // ============================================================ separation models
 
@@ -504,7 +535,9 @@ function withWords(line) {
 function setupVideo(id) {
   const box = $("video");
   box.classList.remove("fallback");
-  const noVideo = id === "demo" || song?.bundled; // demo and built-in songs: animated backdrop, no YouTube
+  // Demo, built-in songs, or video switched off: animated stage lights instead of YouTube.
+  const noVideo = id === "demo" || song?.bundled || !settings.video;
+  videoStuckSince = 0;
   box.classList.toggle("demo-bg", !!noVideo);
   box.style.backgroundImage = "";
   if (noVideo) { ytOk = false; yt?.stopVideo?.(); return; }
@@ -595,9 +628,32 @@ function seekVideo() {
   videoDrift = 0;
   yt.seekTo(audio.currentTime, true);
 }
+// If YouTube won't play the video here (sign-in or bot check, region lock…), the karaoke doesn't
+// need it: after a few seconds of the song playing without the video moving, show the stage lights.
+let videoStuckSince = 0;
+function videoFallback(message) {
+  ytOk = false;
+  yt?.stopVideo?.();
+  $("video").classList.add("demo-bg");
+  toast(message);
+}
+function toast(message) {
+  let el = $("toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.append(el); }
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 6000);
+}
+
 setInterval(() => {
   if (!videoOk() || audio.paused) return;
   const state = yt.getPlayerState();
+  if (state === YT.PlayerState.PLAYING) videoStuckSince = 0;
+  else if (!videoStuckSince) videoStuckSince = performance.now();
+  else if (performance.now() - videoStuckSince > 7000) {
+    return videoFallback("YouTube didn't play the video here, so you get the stage lights instead. The karaoke works the same.");
+  }
   if (state === YT.PlayerState.ENDED) return; // video shorter than the audio: leave it on its last frame
   if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) yt.playVideo();
   if (state !== YT.PlayerState.PLAYING || performance.now() - lastVideoSeek < 2000) return;
@@ -650,6 +706,7 @@ function exitFullscreen() {
 }
 const isFull = () => !!document.fullscreenElement || player.classList.contains("fake-fs");
 function fsChanged() {
+  if (settingsOpen()) hostSettings(); // only the fullscreen element is visible: follow it
   $("fs").querySelector("use").setAttribute("href", isFull() ? "#i-shrink" : "#i-expand");
   shownIdx = -2;
   armIdle();

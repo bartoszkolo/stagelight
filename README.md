@@ -50,8 +50,12 @@ once) into your user folder, which takes a few minutes. Then it opens with a bui
 sing straight away.
 
 The apps aren't code-signed (that costs money), so your system asks before the first launch:
-**Windows:** *More info* → *Run anyway*. **macOS:** right-click the app → *Open*; if it says the
-app is damaged, run `xattr -cr /Applications/Stagelight.app`. **Linux:** `chmod +x Stagelight-*.AppImage`.
+**Windows:** *More info* → *Run anyway*. **macOS:** open Stagelight once, then *System Settings* →
+*Privacy & Security* → *Open Anyway*. **Linux:** `chmod +x Stagelight-*.AppImage`.
+
+No YouTube account needed: if YouTube won't play a music video in the app (for example it asks to
+sign in), Stagelight switches to its stage-light backdrop and the karaoke works the same. You can
+also turn the video off in Settings.
 
 ## Run from source
 

@@ -31,6 +31,11 @@ let setupWin = null, mainWin = null, server = null, quitting = false;
 const ICON = path.join(__dirname, "build", isWin ? "icon.ico" : "icon.png");
 
 if (!app.requestSingleInstanceLock()) app.quit();
+
+// YouTube treats an "Electron/…" user agent as a likely bot and blurs the embedded video behind a
+// "sign in to confirm you're not a bot" prompt (and Google sign-in is blocked inside Electron anyway).
+// Present the plain Chrome user agent this Electron version is built on.
+app.userAgentFallback = app.userAgentFallback.replace(/\sElectron\/\S+/i, "").replace(/\sstagelight\/\S+/i, "");
 app.on("second-instance", () => { const w = mainWin || setupWin; if (w) { if (w.isMinimized()) w.restore(); w.focus(); } });
 
 function log(line) {

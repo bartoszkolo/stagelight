@@ -17,6 +17,7 @@
   },
   "build": {
     "appId": "io.github.bartoszkolo.stagelight",
+    "afterSign": "build/adhoc-sign.js",
     "productName": "Stagelight",
     "artifactName": "Stagelight-${os}-${arch}.${ext}",
     "directories": { "output": "dist", "buildResources": "build" },
