@@ -102,8 +102,8 @@ flowchart LR
    actually singing* in the separated vocal with *when each lyric line should start*, and shifts
    the lyrics to match. No lyrics online? [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
    transcribes the vocal stem, with word timings.
-5. **Sing.** The instrumental is the master clock. The YouTube video plays muted and is kept in
-   sync, and the lyrics are drawn on top.
+5. **Sing.** The instrumental is the master clock. The music video (downloaded at up to 480p,
+   without sound) is kept in sync, and the lyrics are drawn on top.
 
 Everything is cached, so a song you've done once opens instantly next time.
 
@@ -112,7 +112,8 @@ Everything is cached, so a song you've done once opens instantly next time.
 - **Search YouTube from inside the app.** No API key and no copying links. Results show whether a
   song is already in your library.
 - **A processing queue.** Add a whole evening's songs: they're processed one after another in the
-  background, each with live progress and time left, and ready ones get a **Sing** button.
+  background, each with live progress and time left, and ready ones get a **Sing** button. Picked the wrong
+  song? **Cancel** it on the processing screen or with ✕ in the queue, even halfway through.
 - **Arcade mode.** Sing into your microphone and score points against the original singer's
   melody: a note lane, Perfect / Great / Good ratings per line, combos, and an S–D rank at the end.
   Pitch is compared regardless of octave, so anyone can sing any song. Press `A` or click 🎮 Arcade.
@@ -167,8 +168,9 @@ minute song with the default model takes **about 5–8 minutes** end to end on t
   for that song.
 - **Wrong lyrics, or none.** LRCLIB didn't have the song, or the video title was hard to parse.
   Stagelight then falls back to Whisper, which is decent but not perfect on singing.
-- **"This video can't be embedded".** Some labels block embedding. Stagelight shows the video
-  thumbnail instead and the karaoke still works.
+- **No music video, just the cover photo.** The video download failed, or it's still running
+  (songs from older versions get their video the first time you open them). The karaoke works
+  the same either way, and you can turn the video off in Settings.
 - **It's slow.** That's the vocal separation on CPU. Pick a model and let it run in the
   background. The browser tab title shows the progress.
 
@@ -195,7 +197,8 @@ Ideas, roughly in order. Contributions very welcome.
 - [ ] Sample-locked stems with the Web Audio API (one 4-channel file, no drift between vocal and music)
 - [ ] Real per-word timing via forced alignment, instead of spreading a line's time across its words
 - [ ] Key and tempo control
-- [ ] Microphone with reverb, recording your take, and pitch scoring against the original vocal
+- [x] Pitch scoring against the original vocal (arcade mode)
+- [ ] Microphone with reverb, and recording your take
 - [ ] Party mode: a queue with singer names, add songs from your phone over Wi-Fi
 - [ ] A lyrics editor for fixing timings by tapping along
 
