@@ -6,7 +6,7 @@
   "source": "demo",
   "offset": 0,
   "stems": ["karaoke"],
-  "media": "/demo",
+  "media": "demo",
   "lines": [
     { "t": 3.6, "end": 6.8, "text": "Paste a link and press the button" },
     { "t": 7.2, "end": 10.4, "text": "the singer slips out of the room" },

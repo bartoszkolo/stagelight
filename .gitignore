@@ -4,6 +4,8 @@ data/
 models/
 # ffmpeg copied from imageio-ffmpeg at startup
 bin/
+# website build output (site/build.sh)
+site/dist/
 
 .venv/
 venv/

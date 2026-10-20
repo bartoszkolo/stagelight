@@ -18,7 +18,7 @@
   "build": {
     "appId": "io.github.bartoszkolo.stagelight",
     "productName": "Stagelight",
-    "artifactName": "Stagelight-${version}-${os}-${arch}.${ext}",
+    "artifactName": "Stagelight-${os}-${arch}.${ext}",
     "directories": { "output": "dist", "buildResources": "build" },
     "files": ["main.js", "preload.js", "setup.html", "package.json", "build/icon.png", "build/icon.ico"],
     "extraResources": [

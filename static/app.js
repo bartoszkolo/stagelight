@@ -1,4 +1,6 @@
 const $ = (id) => document.getElementById(id);
+// Set by the website's /demo page: the player runs as plain static files, with no server behind it.
+const STATIC = !!window.STAGELIGHT_STATIC;
 const audio = $("audio");
 const vocals = $("vocals"); // separated vocal stem, mixed back in at the chosen level
 const thumb = (id) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
@@ -135,7 +137,9 @@ $("closeSettings").onclick = () => openSettings(false);
 
 let models = [];
 async function loadModels() {
-  const data = await (await fetch("/api/models")).json();
+  const data = STATIC
+    ? { default: "karaoke", models: [{ key: "karaoke", name: "Karaoke", desc: "Removes the lead vocal, keeps backing vocals.", speed: "Fast" }] }
+    : await (await fetch("/api/models")).json();
   models = data.models;
   if (!models.some((m) => m.key === settings.model)) settings.model = data.default;
   $("modelSelect").replaceChildren(...models.map((m) => new Option(`${m.name} · ${m.speed.toLowerCase()}`, m.key)));
@@ -339,6 +343,7 @@ window.addEventListener("popstate", () => {
 
 let libraryItems = [];
 async function loadLibrary() {
+  if (STATIC) return;
   try { libraryItems = await (await fetch("/api/library")).json(); } catch { return; }
   $("library").hidden = !libraryItems.length;
   $("libCount").textContent = libraryItems.length ? `· ${libraryItems.length}` : "";
@@ -884,6 +889,7 @@ async function enqueue(it) {
 
 let queueJobs = [], queueNow = 0, queueWasBusy = false;
 async function refreshQueue() {
+  if (STATIC) return;
   try {
     const data = await (await fetch("/api/jobs")).json();
     queueJobs = data.jobs;
@@ -967,16 +973,29 @@ applySettings();
 loadModels().then(() => {
   loadLibrary();
   const q = new URLSearchParams(location.search);
-  if (q.has("demo")) openDemo();
+  if (STATIC || q.has("demo")) openDemo();
   else if (q.get("v")) start(q.get("v"), q.get("m") || settings.model);
 });
 
 // A self-contained song (own synth backing track and original lyrics) to try the player
 // without processing anything. Also what the README screenshots are made from.
+// Paths are relative so the same files work at "/" in the app and at "/demo/" on the website.
 async function openDemo() {
-  const result = await (await fetch("/demo/demo.json")).json();
+  const result = await (await fetch("demo/demo.json")).json();
   load(result, "karaoke");
-  history.replaceState(null, "", "?demo");
+  if (!STATIC) history.replaceState(null, "", "?demo");
   setArt(null);
+}
+
+if (STATIC) {
+  // Nothing to search or process on the website: "back" returns to the landing page, and
+  // per-song model switching (which needs the server) is hidden.
+  $("back").onclick = () => { location.href = "../"; };
+  $("modelList").closest("section").hidden = true;
+  const cta = document.createElement("a");
+  cta.className = "static-cta";
+  cta.href = "../#download";
+  cta.innerHTML = "Like it? <b>Get Stagelight</b> and sing any song →";
+  document.body.append(cta);
 }
 $("demoLink")?.addEventListener("click", (e) => { e.preventDefault(); history.pushState(null, "", "?demo"); openDemo(); });

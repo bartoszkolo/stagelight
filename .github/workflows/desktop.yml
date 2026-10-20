@@ -80,6 +80,7 @@ jobs:
             desktop/dist/*.dmg
             desktop/dist/*.AppImage
             desktop/dist/*.deb
+            !desktop/dist/*__uninstaller*
 
   release:
     needs: build
