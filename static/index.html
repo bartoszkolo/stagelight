@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -59,7 +59,7 @@
       <input id="libSearch" type="search" placeholder="Search songs or artists  ( / )" autocomplete="off" aria-label="Search your library">
     </div>
     <div id="libGrid" class="grid"></div>
-    <p id="libEmpty" class="lib-empty" hidden>No songs match â€ś<span></span>â€ť.</p>
+    <p id="libEmpty" class="lib-empty" hidden>No songs match “<span></span>”.</p>
   </div>
 </section>
 
@@ -69,7 +69,7 @@
     <img id="procThumb" alt="">
     <div class="proc-body">
       <div class="eyebrow">Preparing your track</div>
-      <h2 id="procTitle">Loadingâ€¦</h2>
+      <h2 id="procTitle">Loading…</h2>
       <ol id="steps" class="steps">
         <li data-step="download"><i></i><span>Download audio</span><small></small></li>
         <li data-step="separate"><i></i><span>Remove vocals</span><small></small></li>
@@ -118,13 +118,13 @@
       </div>
       <div class="ctl-group" title="Lyrics early or late? Nudge them ( [ and ] )">
         <span class="ctl-label">Sync</span>
-        <button id="offMinus" class="mini" aria-label="Show lyrics earlier">â’</button><b id="offVal" class="ctl-val" aria-live="polite">0.0s</b><button id="offPlus" class="mini" aria-label="Show lyrics later">+</button>
+        <button id="offMinus" class="mini" aria-label="Show lyrics earlier">−</button><b id="offVal" class="ctl-val" aria-live="polite">0.0s</b><button id="offPlus" class="mini" aria-label="Show lyrics later">+</button>
       </div>
       <button id="openSettings" class="icon-btn" title="Settings (S)"><svg><use href="#i-gear"/></svg></button>
       <button id="fs" class="icon-btn" title="Fullscreen (F)"><svg><use href="#i-expand"/></svg></button>
     </div>
 
-    <!-- ============================================================ settings -->
+    <!-- ============================================================ settings (drawer) -->
     <aside id="settings" aria-label="Settings">
       <div class="set-head">
         <h3>Settings</h3>
@@ -202,7 +202,7 @@
           <h4>Shortcuts</h4>
           <dl class="keys">
             <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
-            <dt><kbd>â†</kbd> <kbd>â†’</kbd></dt><dd>Back / forward 5 s</dd>
+            <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Back / forward 5 s</dd>
             <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Lyrics earlier / later</dd>
             <dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
             <dt><kbd>S</kbd></dt><dd>Settings</dd>
@@ -212,6 +212,7 @@
       </div>
     </aside>
   </div>
+  <p id="credit" class="credit" hidden></p>
 </section>
 
 <!-- ============================================================ queue -->

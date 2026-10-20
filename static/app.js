@@ -335,7 +335,8 @@ function goHome({ push = true } = {}) {
 // Browser back/forward moves between the library and songs instead of leaving the app.
 window.addEventListener("popstate", () => {
   const q = new URLSearchParams(location.search);
-  if (q.get("v")) start(q.get("v"), q.get("m") || settings.model, { push: false });
+  if (q.get("song")) openBundled(q.get("song"), { push: false });
+  else if (q.get("v")) start(q.get("v"), q.get("m") || settings.model, { push: false });
   else goHome({ push: false });
 });
 
@@ -362,16 +363,22 @@ function renderLibrary() {
     const card = document.createElement("button");
     card.className = "card";
     card.innerHTML = `<div class="thumb"></div><div class="meta"><div class="t"></div><div class="a"></div><div class="tags"></div></div>`;
-    card.querySelector(".thumb").style.backgroundImage = `url(${thumb(it.id)})`;
+    const th = card.querySelector(".thumb");
+    if (it.bundled) {
+      // Built-in songs have no YouTube video: a stage-light card with the title instead.
+      th.classList.add("bundled");
+      th.textContent = it.title;
+    } else th.style.backgroundImage = `url(${thumb(it.id)})`;
     card.querySelector(".t").append(...highlight(it.title, words));
     card.querySelector(".a").append(...highlight(it.artist, words));
-    card.querySelector(".tags").append(...it.stems.map((k) => {
+    card.querySelector(".tags").append(...(it.bundled ? ["Built-in · ready to sing"] : it.stems.map(modelName)).map((label) => {
       const t = document.createElement("span");
       t.className = "tag";
-      t.textContent = modelName(k);
+      t.textContent = label;
       return t;
     }));
-    card.onclick = () => start(it.id, it.stems.includes(settings.model) ? settings.model : it.stems[0]);
+    card.onclick = () => it.bundled ? openBundled(it.id)
+      : start(it.id, it.stems.includes(settings.model) ? settings.model : it.stems[0]);
     return card;
   }));
 }
@@ -438,8 +445,12 @@ function load(result, model) {
 }
 
 function updateSub() {
-  const src = { lrclib: "Lyrics from LRCLIB", whisper: "Lyrics transcribed by Whisper", demo: "Demo track" }[song.source] || "No lyrics";
+  const src = { lrclib: "Lyrics from LRCLIB", whisper: "Lyrics transcribed by Whisper", demo: "Demo track",
+                bundled: `Built-in song · ${song.license || ""}` }[song.source] || "No lyrics";
   $("nowSub").textContent = `${song.artist} · ${src} · ${modelName(currentModel)} model`;
+  // Freely licensed built-in songs carry their attribution, shown under the player.
+  $("credit").textContent = song.credit || "";
+  $("credit").hidden = !song.credit;
 }
 
 // Change the instrumental/vocal stems without losing the playback position.
@@ -492,9 +503,10 @@ function withWords(line) {
 function setupVideo(id) {
   const box = $("video");
   box.classList.remove("fallback");
-  box.classList.toggle("demo-bg", id === "demo");
+  const noVideo = id === "demo" || song?.bundled; // demo and built-in songs: animated backdrop, no YouTube
+  box.classList.toggle("demo-bg", !!noVideo);
   box.style.backgroundImage = "";
-  if (id === "demo") { ytOk = false; yt?.stopVideo?.(); return; } // demo: animated backdrop, no video
+  if (noVideo) { ytOk = false; yt?.stopVideo?.(); return; }
   ytOk = true;
   pendingVideo = id;
   const create = () => {
@@ -670,7 +682,7 @@ let saveTimer;
 function updateOffset(delta) {
   offset = Math.round((offset + delta) * 10) / 10;
   $("offVal").textContent = `${offset > 0 ? "+" : ""}${offset.toFixed(1)}s`;
-  if (delta && song && song.id !== "demo") {
+  if (delta && song && song.id !== "demo" && !song.bundled) {
     clearTimeout(saveTimer);
     const id = song.id;
     saveTimer = setTimeout(() => fetch(`/api/songs/${id}/offset`, {
@@ -974,13 +986,30 @@ loadModels().then(() => {
   loadLibrary();
   const q = new URLSearchParams(location.search);
   if (STATIC || q.has("demo")) openDemo();
+  else if (q.get("song")) openBundled(q.get("song"), { push: false });
   else if (q.get("v")) start(q.get("v"), q.get("m") || settings.model);
 });
 
-// A self-contained song (own synth backing track and original lyrics) to try the player
-// without processing anything. Also what the README screenshots are made from.
-// Paths are relative so the same files work at "/" in the app and at "/demo/" on the website.
+// Built-in songs (freely licensed, already separated and synced, in static/songs/<slug>/): they
+// open instantly, with no server work. Paths are relative so the same files work at "/" in the
+// app and at "/demo/" on the website.
+const DEMO_SONG = "crazy-glue";
+async function openBundled(slug, { push = true } = {}) {
+  pollToken++;
+  const r = await fetch(`songs/${slug}/song.json`);
+  if (!r.ok) throw new Error(`Built-in song ${slug} not found`);
+  const result = await r.json();
+  load(result, result.stems[0]);
+  if (!STATIC) {
+    const target = `?song=${slug}`;
+    if (push && location.search !== target) history.pushState(null, "", target); else history.replaceState(null, "", target);
+  }
+  setArt(null);
+}
+
+// "Try the demo": the built-in song, or the tiny synth demo (original lyrics) if it's missing.
 async function openDemo() {
+  try { return await openBundled(DEMO_SONG, { push: false }); } catch {}
   const result = await (await fetch("demo/demo.json")).json();
   load(result, "karaoke");
   if (!STATIC) history.replaceState(null, "", "?demo");

@@ -168,8 +168,12 @@ Stagelight is a tool for **personal, private use**. It runs entirely on your com
 nothing. Downloading from YouTube may be against YouTube's Terms of Service where you live, and
 songs, music videos and lyrics belong to their rights holders. Don't redistribute the stems or
 lyrics it produces, and don't run it as a public service. Lyrics come from
-[LRCLIB](https://lrclib.net). The demo song in `static/demo/` (lyrics and music) is original and
-MIT-licensed like the rest of the code.
+[LRCLIB](https://lrclib.net).
+
+**Built-in song:** [“Crazy Glue” by Josh Woodward](https://www.joshwoodward.com/song/CrazyGlue) is
+licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Stagelight ships it with the lead
+vocal separated out (`static/songs/crazy-glue/`, made with `tools/bundle_song.py`). The tiny synth
+demo in `static/demo/` (lyrics and music) is original and MIT-licensed like the rest of the code.
 
 ## Credits
 

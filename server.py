@@ -173,9 +173,17 @@ def save_offset(vid: str, body: OffsetIn):
     return {"ok": True}
 
 
+STATIC = pipeline.Path(__file__).parent / "static"
+
+
 @app.get("/api/library")
 def library():
+    # Built-in songs first (freely licensed, shipped in static/songs/), then the user's own.
     items = []
+    for p in sorted(STATIC.glob("songs/*/song.json")):
+        d = json.loads(p.read_text(encoding="utf-8"))
+        items.append({"id": d["id"], "artist": d["artist"], "title": d["title"], "stems": d["stems"],
+                      "source": "bundled", "bundled": True})
     for p in sorted(pipeline.DATA.glob("*/result.json"), key=lambda p: -p.stat().st_mtime):
         try:
             d = pipeline.load_result(p.parent.name)
@@ -188,4 +196,4 @@ def library():
 
 
 app.mount("/media", StaticFiles(directory=pipeline.DATA), name="media")
-app.mount("/", StaticFiles(directory=pipeline.Path(__file__).parent / "static", html=True), name="static")
+app.mount("/", StaticFiles(directory=STATIC, html=True), name="static")

@@ -134,6 +134,17 @@ svg { width: 1em; height: 1em; display: block; }
 .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
 .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--muted); }
 
+/* built-in songs: a stage-light card with the title, no video thumbnail */
+.card .thumb.bundled {
+  display: grid; place-items: center; padding: 16px; text-align: center;
+  font-weight: 900; font-size: 22px; letter-spacing: -.01em; line-height: 1.1;
+  background:
+    radial-gradient(60% 80% at 25% 30%, rgba(255, 79, 163, .75), transparent 70%),
+    radial-gradient(60% 80% at 80% 70%, rgba(139, 92, 255, .8), transparent 70%), #150f26;
+}
+.card .thumb.bundled::after { display: none; }
+.credit { color: var(--muted); font-size: 12.5px; text-align: center; margin: 12px 0 0; }
+
 /* ------------------------------------------------------------ search results */
 #results { margin-bottom: 44px; }
 .card .dur {
